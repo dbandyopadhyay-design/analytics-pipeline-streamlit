@@ -45,26 +45,61 @@ class AnalyticsPipeline:
     def initialize_clients(self):
         """Initialize BigQuery and Grok API clients"""
         try:
+            # Initialize BigQuery client
+            st.info("🔧 Initializing BigQuery client...")
             self.bq = bigquery.Client(project=self.project_id)
             
+            # Test BigQuery connection
+            try:
+                test_query = "SELECT 1 as test_connection LIMIT 1"
+                test_job = self.bq.query(test_query)
+                test_result = test_job.result()
+                st.success("✅ BigQuery connection successful")
+            except Exception as bq_error:
+                st.error(f"❌ BigQuery connection failed: {str(bq_error)}")
+                st.error("💡 **Possible solutions:**\n"
+                        "- Ensure Google Cloud credentials are properly configured\n"
+                        "- Check if the project ID 'x-gcp-lightbulb' is accessible\n"
+                        "- Verify BigQuery API is enabled")
+                return False
+            
             # Try to get Grok API key from secrets or environment
+            st.info("🔑 Initializing Grok API client...")
             try:
                 grok_api_key = st.secrets["GROK_API_KEY"]
+                st.success("✅ Grok API key found in secrets")
             except:
-                grok_api_key = os.getenv("GROK_API_KEY")
+                try:
+                    grok_api_key = os.getenv("GROK_API_KEY")
+                    if grok_api_key:
+                        st.success("✅ Grok API key found in environment")
+                    else:
+                        raise ValueError("No API key found")
+                except:
+                    st.warning("⚠️ Grok API key not found. AI summaries will be skipped.")
+                    st.info("💡 **To enable AI summaries:**\n"
+                           "- Add GROK_API_KEY to your Streamlit secrets\n"
+                           "- Or set GROK_API_KEY environment variable")
+                    grok_api_key = None
                 
-            if not grok_api_key:
-                st.error("❌ Grok API key not found. Please set GROK_API_KEY in secrets or environment.")
-                return False
+            if grok_api_key:
+                try:
+                    self.grok_client = OpenAI(
+                        api_key=grok_api_key,
+                        base_url="https://api.x.ai/v1",
+                        timeout=3600.0
+                    )
+                    st.success("✅ Grok API client initialized")
+                except Exception as grok_error:
+                    st.warning(f"⚠️ Grok API initialization failed: {str(grok_error)}")
+                    self.grok_client = None
+            else:
+                self.grok_client = None
                 
-            self.grok_client = OpenAI(
-                api_key=grok_api_key,
-                base_url="https://api.x.ai/v1",
-                timeout=3600.0
-            )
             return True
         except Exception as e:
             st.error(f"❌ Error initializing clients: {str(e)}")
+            st.error(f"**Error details:** {type(e).__name__}: {str(e)}")
             return False
     
     def calculate_date_range(self, date_mode, start_date=None, end_date=None, days_back=28):
@@ -149,12 +184,33 @@ class AnalyticsPipeline:
         """
         
         try:
+            st.info("🚀 Executing BigQuery job...")
             job = self.bq.query(query)
             job.result()  # Wait for completion
-            st.success(f"✅ Step 1: Impressions table created successfully - {impressions_table}")
+            
+            # Get row count to verify success
+            count_query = f"SELECT COUNT(*) as row_count FROM {impressions_table}"
+            count_job = self.bq.query(count_query)
+            row_count = list(count_job.result())[0].row_count
+            
+            st.success(f"✅ Step 1 completed: Created impressions table with {row_count:,} rows")
             return True, impressions_table
         except Exception as e:
             st.error(f"❌ Step 1 failed: {str(e)}")
+            st.error(f"**Error details:** {type(e).__name__}: {str(e)}")
+            
+            # Show helpful error messages based on common issues
+            error_str = str(e).lower()
+            if "not found" in error_str or "does not exist" in error_str:
+                st.error("💡 **Possible issue:** Source tables may not exist or are not accessible.")
+                st.error("**Tables needed:**\n"
+                        "- `twttr-bq-tweetsource-prod.user.unhydrated_flat`\n"
+                        "- `twttr-bq-iesource-prod.user.tweet_interaction_daily_aggregates`")
+            elif "permission" in error_str or "access" in error_str:
+                st.error("💡 **Possible issue:** Insufficient permissions to access source tables.")
+            elif "quota" in error_str:
+                st.error("💡 **Possible issue:** BigQuery quota exceeded.")
+            
             return False, None
     
     def step2_upload_and_tag(self, template_df, country, start_date, end_date, category_name, impressions_table):
@@ -1241,6 +1297,13 @@ def main():
             help="Name for your analysis category (used in table names)"
         )
         
+        # Test mode toggle
+        st.subheader("🧪 Test Mode")
+        test_mode = st.checkbox(
+            "Enable Test Mode",
+            help="Use sample data instead of real BigQuery tables (for testing authentication)"
+        )
+        
         # Template upload
         st.subheader("📤 Template Upload")
         uploaded_file = st.file_uploader(
@@ -1275,6 +1338,30 @@ def main():
                     st.session_state.processing = True
                     
                     try:
+                        # Test mode - skip BigQuery and use sample data
+                        if test_mode:
+                            st.info("🧪 **Test Mode Enabled** - Using sample data for testing")
+                            analytics_df, html_report = pipeline.run_test_mode(
+                                template_df, category_name, country, start_date, end_date
+                            )
+                            
+                            # Store results
+                            st.session_state.results = {
+                                'analytics_df': analytics_df,
+                                'html_report': html_report,
+                                'category_name': category_name,
+                                'country': country,
+                                'start_date': start_date,
+                                'end_date': end_date
+                            }
+                            
+                            st.session_state.processing = False
+                            st.success("🎉 **Test Pipeline completed successfully!** Sample results are ready for review.")
+                            return
+                        
+                        # Production mode - run full BigQuery pipeline
+                        st.info("🚀 **Production Mode** - Running full BigQuery pipeline")
+                        
                         # Initialize clients
                         if not pipeline.initialize_clients():
                             st.session_state.processing = False
@@ -1889,6 +1976,61 @@ def display_media_tab(category_data):
         except Exception as e:
             print(f"Error generating HTML report: {e}")
             return "<html><body><h1>Error generating report</h1></body></html>"
+    
+    def run_test_mode(self, template_df, category_name, country, start_date, end_date):
+        """Run pipeline in test mode with sample data"""
+        st.info("🧪 Running in Test Mode - Using sample data")
+        
+        # Create sample analytics data based on template
+        sample_data = []
+        for _, row in template_df.iterrows():
+            brand_data = {
+                'tags': row['Sub Category'],
+                'count_of_posts': 1000 + len(row['Sub Category']) * 100,
+                'impressions': 50000 + len(row['Sub Category']) * 5000,
+                'reply': 500 + len(row['Sub Category']) * 50,
+                'favorite': 2000 + len(row['Sub Category']) * 200,
+                'retweet': 300 + len(row['Sub Category']) * 30,
+                'video_views': 1500 + len(row['Sub Category']) * 150,
+                'no_of_authors': 100 + len(row['Sub Category']) * 10,
+                'age_split': '18-24: 25%, 25-34: 35%, 35-44: 25%, 45+: 15%',
+                'gender_split': 'Male: 60%, Female: 40%',
+                'vertical_of_interest': 'Technology, Sports, Entertainment, News',
+                'top_hashtags': '#tech #innovation #future',
+                'top_mentions': '@techcrunch @wired @theverge',
+                'entity_names': row['Sub Category'],
+                'top_creators': '@user1 @user2 @user3',
+                'daily_data_json': json.dumps([
+                    {'post_date': '2024-01-01', 'no_of_posts': 50, 'top_post_on_day': [{'Tweet_ID': '123', 'Tweet_Text': f'Sample post about {row["Sub Category"]}', 'Impressions': 1000}]},
+                    {'post_date': '2024-01-02', 'no_of_posts': 75, 'top_post_on_day': [{'Tweet_ID': '124', 'Tweet_Text': f'Another post about {row["Sub Category"]}', 'Impressions': 1200}]},
+                    {'post_date': '2024-01-03', 'no_of_posts': 60, 'top_post_on_day': [{'Tweet_ID': '125', 'Tweet_Text': f'Latest news on {row["Sub Category"]}', 'Impressions': 1100}]}
+                ]),
+                'top_posts': json.dumps([
+                    {'Tweet_ID': '123', 'Tweet_Text': f'Top post about {row["Sub Category"]}', 'Impressions': 5000, 'Reply_Count': 50, 'Favorite_Count': 200, 'Retweet_Count': 30, 'Quote_Count': 10, 'Video_Views': 0},
+                    {'Tweet_ID': '124', 'Tweet_Text': f'Popular {row["Sub Category"]} discussion', 'Impressions': 4500, 'Reply_Count': 45, 'Favorite_Count': 180, 'Retweet_Count': 25, 'Quote_Count': 8, 'Video_Views': 0}
+                ]),
+                'top_photos': json.dumps([]),
+                'top_videos': json.dumps([]),
+                'top_gifs': json.dumps([]),
+                'top_posts_reply': json.dumps([]),
+                'top_posts_favorite': json.dumps([]),
+                'top_posts_retweet': json.dumps([]),
+                'top_posts_quote': json.dumps([]),
+                'ai_summary': f'Sample AI summary for {row["Sub Category"]}: This category shows strong engagement with consistent posting activity and good audience interaction.',
+                'data_start_date': str(start_date),
+                'data_end_date': str(end_date),
+                'country': country.upper()
+            }
+            sample_data.append(brand_data)
+        
+        # Convert to DataFrame
+        analytics_df = pd.DataFrame(sample_data)
+        
+        # Generate HTML report
+        html_report = self.step5_generate_html_report(analytics_df, category_name)
+        
+        st.success("✅ Test mode completed successfully!")
+        return analytics_df, html_report
 
 if __name__ == "__main__":
     main()
