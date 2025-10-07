@@ -1341,9 +1341,16 @@ def main():
                         # Test mode - skip BigQuery and use sample data
                         if test_mode:
                             st.info("🧪 **Test Mode Enabled** - Using sample data for testing")
-                            analytics_df, html_report = pipeline.run_test_mode(
-                                template_df, category_name, country, start_date, end_date
-                            )
+                            
+                            # Check if run_test_mode method exists (for deployment compatibility)
+                            if hasattr(pipeline, 'run_test_mode'):
+                                analytics_df, html_report = pipeline.run_test_mode(
+                                    template_df, category_name, country, start_date, end_date
+                                )
+                            else:
+                                st.error("❌ Test mode not available in this version. Please refresh the page.")
+                                st.session_state.processing = False
+                                return
                             
                             # Store results
                             st.session_state.results = {
@@ -1978,7 +1985,7 @@ def display_media_tab(category_data):
             return "<html><body><h1>Error generating report</h1></body></html>"
     
     def run_test_mode(self, template_df, category_name, country, start_date, end_date):
-        """Run pipeline in test mode with sample data"""
+        """Run pipeline in test mode with sample data - Fixed version"""
         st.info("🧪 Running in Test Mode - Using sample data")
         
         # Create sample analytics data based on template
