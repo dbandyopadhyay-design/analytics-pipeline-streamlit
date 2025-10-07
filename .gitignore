@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Temporary files
+*.tmp
+*.temp
+
+# Debug files
+debug_*.html
+debug_*.json
+
+# Analytics output files (keep sample files but exclude generated ones)
+analytics_*.csv
+analytics_*.html
+grok_html_report_*.html
+
+# Docker (not needed for Streamlit Community Cloud)
+Dockerfile
+
+# Flask files (not needed for Streamlit deployment)
+flask_app.py
+main.py
+templates/
+static/
+
+# App Engine files (not needed for Streamlit Community Cloud)
+app.yaml
+deploy.sh
+
+# Backup files
+*_backup.py
+app_backup*.py
+app_broken*.py
+app_fixed.py
+app_clean.py

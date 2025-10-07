@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Analytics Dashboard - X Style - PLAYGROUND</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --x-background: #000000;
+            --x-text-primary: #FFFFFF;
+            --x-text-secondary: #71767B;
+            --x-border-color: #2F3336;
+            --x-blue: #1D9BF0;
+            --x-card-background: #000000;
+            --font-family: "Helvetica Neue", Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-family);
+        }
+
+        body {
+            background: var(--x-background);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(29, 161, 242, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(29, 161, 242, 0.015) 0%, transparent 50%);
+            color: var(--x-text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 15px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .header-bar {
+            background: var(--x-background);
+            padding: 12px 20px;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            border-bottom: 1px solid var(--x-border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .x-logo-header {
+            grid-column: 1;
+            justify-self: start;
+        }
+
+        .x-logo-header svg {
+            width: 30px;
+            height: 30px;
+        }
+
+        .header-right {
+            grid-column: 3;
+            justify-self: end;
+        }
+          
+        .header-center {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            grid-column: 2;
+        }
+
+        .header-title {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+          
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--x-text-secondary);
+        }
+          
+        .header-right {
+             display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .metric-pill {
+            background: var(--x-card-background);
+            color: var(--x-text-primary);
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid var(--x-border-color);
+        }
+
+        #main-nav {
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 1px solid var(--x-border-color);
+            background: var(--x-background);
+            position: sticky;
+            top: 61px;
+            z-index: 999;
+        }
+
+        .nav-link {
+            padding: 16px 0;
+            text-decoration: none;
+            color: var(--x-text-secondary);
+            font-weight: bold;
+            font-size: 15px;
+            flex-grow: 1;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-link.active {
+            color: var(--x-text-primary);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 4px;
+            background-color: var(--x-blue);
+            border-radius: 9999px;
+        }
+          
+        #category-tabs-container {
+            display: flex;
+            justify-content: flex-start;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--x-border-color);
+            background: var(--x-background);
+            padding: 8px 16px;
+            position: sticky;
+            top: 118px;
+            z-index: 998;
+            scrollbar-width: none;
+        }
+        #category-tabs-container::-webkit-scrollbar {
+            display: none;
+        }
+
+          
+        .category-tab {
+            padding: 8px 16px;
+            text-decoration: none;
+            color: var(--x-text-secondary);
+            font-weight: normal;
+            font-size: 14px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-radius: 9999px;
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .category-tab:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .category-tab.active {
+            color: var(--x-text-primary);
+            background-color: var(--x-border-color);
+        }
+
+        #dashboard-content {
+            min-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+            padding-bottom: 60px;
+            min-height: 500px;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--x-border-color);
+            background: var(--x-background);
+            color: var(--x-text-primary);
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 16px;
+            padding: 16px;
+            border-bottom: 1px solid var(--x-border-color);
+            overflow: visible;
+            min-height: 420px;
+        }
+
+        .chart-card {
+            background: var(--x-card-background);
+            border: 1px solid var(--x-border-color);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 380px; /* Ensure enough space for title + chart */
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            text-align: center;
+            color: var(--x-text-primary);
+            white-space: nowrap;
+            overflow: visible;
+            padding-bottom: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 16px;
+            border-bottom: 1px solid var(--x-border-color);
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--x-card-background) 0%, rgba(113, 118, 123, 0.02) 100%);
+            border: 1px solid var(--x-border-color);
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #71767B, #8B98A5, #71767B);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(113, 118, 123, 0.15);
+            border-color: rgba(113, 118, 123, 0.3);
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--x-text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #E7E9EA 0%, #F7F9FA 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            margin-bottom: 4px;
+            color: var(--x-text-primary);
+        }
+
+        .metric-card:nth-child(1) .metric-value {
+            background: linear-gradient(135deg, #F7F9FA 0%, #E7E9EA 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-card:nth-child(2) .metric-value {
+            background: linear-gradient(135deg, #E7E9EA 0%, #D6D9DB 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-card:nth-child(3) .metric-value {
+            background: linear-gradient(135deg, #F7F9FA 0%, #E7E9EA 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-card:nth-child(4) .metric-value {
+            background: linear-gradient(135deg, #E7E9EA 0%, #D6D9DB 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Engagement cards specific styling */
+        .insights-grid .metric-card:nth-child(1) .metric-value {
+            background: linear-gradient(135deg, #F7F9FA 0%, #E7E9EA 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .insights-grid .metric-card:nth-child(2) .metric-value {
+            background: linear-gradient(135deg, #E7E9EA 0%, #D6D9DB 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .insights-grid .metric-card:nth-child(3) .metric-value {
+            background: linear-gradient(135deg, #F7F9FA 0%, #E7E9EA 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .insights-grid .metric-card:nth-child(4) .metric-value {
+            background: linear-gradient(135deg, #E7E9EA 0%, #D6D9DB 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Animation for metric cards appearing */
+        @keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .metric-card {
+            animation: slideUpFade 0.6s ease-out;
+        }
+
+        .metric-card:nth-child(1) { animation-delay: 0.1s; }
+        .metric-card:nth-child(2) { animation-delay: 0.2s; }
+        .metric-card:nth-child(3) { animation-delay: 0.3s; }
+        .metric-card:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Add subtle pulse animation for hover */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .metric-card:hover .metric-value {
+            animation: pulse 2s infinite;
+        }
+
+        /* Animation for insight cards (Themes tab) */
+        .insight-card {
+            animation: slideUpFade 0.6s ease-out;
+        }
+
+        .insight-card:nth-child(1) { animation-delay: 0.1s; }
+        .insight-card:nth-child(2) { animation-delay: 0.2s; }
+        .insight-card:nth-child(3) { animation-delay: 0.3s; }
+        .insight-card:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Animation for media cards (Media tab) */
+        .media-item {
+            animation: slideUpFade 0.6s ease-out;
+        }
+
+        .media-item:nth-child(1) { animation-delay: 0.1s; }
+        .media-item:nth-child(2) { animation-delay: 0.2s; }
+        .media-item:nth-child(3) { animation-delay: 0.3s; }
+        .media-item:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Animation for engagement cards (Media tab) */
+        .engagement-item {
+            animation: slideUpFade 0.6s ease-out;
+        }
+
+        .engagement-item:nth-child(1) { animation-delay: 0.1s; }
+        .engagement-item:nth-child(2) { animation-delay: 0.2s; }
+        .engagement-item:nth-child(3) { animation-delay: 0.3s; }
+        .engagement-item:nth-child(4) { animation-delay: 0.4s; }
+
+        /* Cool new features */
+        .insight-tooltip {
+            position: fixed;
+            background: var(--x-bg-primary);
+            border: 1px solid var(--x-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--x-text-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            pointer-events: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .metric-highlight-gold {
+            position: relative;
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #000;
+            transform: scale(1.02);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .metric-highlight-gold::before {
+            content: '🏆';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 16px;
+        }
+
+        .metric-highlight-silver {
+            position: relative;
+            background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+            color: #000;
+            transform: scale(1.01);
+            box-shadow: 0 2px 10px rgba(192, 192, 192, 0.3);
+        }
+
+        .metric-highlight-silver::before {
+            content: '🥈';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 14px;
+        }
+
+        /* Enhanced hover effects */
+        .insight-card:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 25px rgba(29, 161, 242, 0.15);
+        }
+
+        .media-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Pulse animation for loading states */
+        .metric-loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ✨ GLASSMORPHISM PREMIUM UI ✨ */
+        
+        /* Premium glass header */
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Glass navigation */
+        .nav-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .nav-link {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Glass metric cards */
+        .metric-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .metric-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        /* Glass insight cards */
+        .insight-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+        }
+
+        .insight-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .insight-date {
+            color: var(--x-accent);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .insight-metric {
+            color: var(--x-text-secondary);
+            font-size: 12px;
+        }
+
+        .top-post {
+            margin-top: 12px;
+        }
+
+        .post-text {
+            color: var(--x-text-primary);
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .post-metrics {
+            display: flex;
+            gap: 12px;
+        }
+
+        .post-impressions {
+            color: var(--x-text-secondary);
+            font-size: 12px;
+        }
+
+        /* Audience layout responsive design */
+        .audience-layout {
+            display: grid;
+            grid-template-columns: 1fr 0.8fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .audience-layout {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .audience-info-column {
+                flex-direction: row !important;
+                gap: 16px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .audience-info-column {
+                flex-direction: column !important;
+            }
+        }
+
+        /* Glass media cards */
+        .media-item {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.06);
+        }
+
+        .media-item:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Glass chart containers */
+        .chart-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Glass summary cards */
+        .summary-card {
+            background: rgba(255, 255, 255, 0.04) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .summary-card:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 10px 36px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Glass tooltip */
+        .insight-tooltip {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Premium glass background overlay */
+        .dashboard-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(29, 161, 242, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(29, 161, 242, 0.02) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.01) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Enhanced glass effects for premium highlights */
+        .metric-highlight-gold {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 237, 78, 0.1) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.1);
+        }
+
+        .metric-highlight-silver {
+            background: linear-gradient(135deg, rgba(192, 192, 192, 0.12) 0%, rgba(232, 232, 232, 0.08) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(192, 192, 192, 0.15);
+            box-shadow: 0 6px 28px rgba(192, 192, 192, 0.08);
+        }
+
+        /* Smooth glass transitions */
+        * {
+            transition: backdrop-filter 0.3s ease, background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .media-category-row {
+            padding: 16px;
+            border-bottom: 1px solid var(--x-border-color);
+        }
+
+        .media-items-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .media-item, .insight-item, .engagement-item {
+            background: var(--x-card-background);
+            border: 1px solid var(--x-border-color);
+            border-radius: 12px;
+            padding: 16px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .media-image, .engagement-image {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid var(--x-border-color);
+            margin-bottom: 12px;
+        }
+          
+        .media-text, .insight-text, .engagement-text {
+            margin-bottom: 12px;
+            font-size: 14px;
+            height: 60px;
+            overflow: hidden;
+        }
+          
+        .post-stats, .insight-header, .engagement-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--x-text-secondary);
+            font-size: 13px;
+        }
+          
+        .media-link {
+            color: var(--x-blue);
+            text-decoration: none;
+            font-size: 13px;
+        }
+          
+        .tag {
+            background-color: var(--x-border-color);
+            color: var(--x-text-primary);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 13px;
+        }
+
+        footer {
+            padding: 24px;
+            text-align: center;
+            color: var(--x-text-secondary);
+            font-size: 13px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header-bar dashboard-header">
+        <span class="x-logo-header">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g>
+            </svg>
+        </span>
+        <div class="header-center">
+            <div class="header-title">Football Analytics Analysis</div>
+            <div class="header-subtitle" id="dynamic-subtitle">X Insights Lab | France | 2025-09-21 to 2025-09-23</div>
+        </div>
+        <div class="header-right">
+            <div class="metric-pill">5 Categories</div>
+            <div class="metric-pill">1,343,492 Posts</div>
+        </div>
+    </div>
+      
+    <nav id="main-nav" class="nav-container">
+        <a href="#" data-page="overview" class="nav-link active">Overview</a>
+        <a href="#" data-page="metrics" class="nav-link">Metrics</a>
+        <a href="#" data-page="audience" class="nav-link">Audience</a>
+        <a href="#" data-page="trends" class="nav-link">Trends</a>
+        <a href="#" data-page="insights" class="nav-link">Themes</a>
+        <a href="#" data-page="media" class="nav-link">Media</a>
+    </nav>
+
+    <div id="category-tabs-container" style="display: none;"></div>
+
+    <main id="dashboard-content">
+        <!-- Overview Section -->
+        <div id="overview" class="content-section active">
+            <div class="section-title">Performance Overview</div>
+            
+            <div class="charts-container">
+                <div class="chart-card">
+                    <div class="chart-title">Impressions by Category</div>
+                    <div class="chart-container">
+                        <canvas id="impressionsChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Content Distribution</div>
+                    <div class="chart-container">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- All Categories AI Summaries -->
+            <div style="padding: 16px;">
+                <div class="section-title" style="margin-bottom: 20px;">Category Insights</div>
+                <div id="all-summaries-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                    <!-- AI Summary cards will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Section -->
+        <div id="metrics" class="content-section">
+            <div id="metrics-view">
+                 <div style="text-align: center; color: var(--x-text-secondary); padding: 40px;">
+                    Select a category to see detailed metrics.
+                </div>
+            </div>
+        </div>
+
+        <!-- Audience Section -->
+        <div id="audience" class="content-section">
+            <div id="audience-view">
+                 <div style="text-align: center; color: var(--x-text-secondary); padding: 40px;">
+                    Select a category to see audience insights.
+                </div>
+            </div>
+        </div>
+
+        <!-- Themes Section -->
+        <div id="insights" class="content-section">
+            <div id="insights-view">
+                 <div style="text-align: center; color: var(--x-text-secondary); padding: 40px;">
+                    Select a category to see detailed themes.
+                </div>
+            </div>
+        </div>
+
+        <!-- Trends Section -->
+        <div id="trends" class="content-section">
+            <div id="trends-view">
+                 <div style="text-align: center; color: var(--x-text-secondary); padding: 40px;">
+                    Select a category to see daily trends.
+                </div>
+            </div>
+        </div>
+
+        <!-- Media Section -->
+        <div id="media" class="content-section">
+             <div id="media-view">
+                 <div style="text-align: center; color: var(--x-text-secondary); padding: 40px;">
+                    Select a category to see top media.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>🎮 PLAYGROUND VERSION - Powered by X Analytics • Experiment freely!</p>
+    </footer>
+
+    <script>
+        // Updated data from analytics_ballon_analysis_20250926_142742.csv
+        const allData = [
+            {
+                "name": "Google Pixel",
+                "impressions": 2347108,
+                "posts": 12847,
+                "reply": 816,
+                "favorite": 38852,
+                "retweet": 3170,
+                "video_views": 593174,
+                "no_of_authors": 8435,
+                "engagement": 42838,
+                        "age_data": [
+                                    {
+                                                "label": "18-24",
+                                "value": 27.66
+                                    },
+                                    {
+                                                "label": "25-34",
+                                "value": 39.94
+                                    },
+                                    {
+                                                "label": "35-44",
+                                "value": 17.45
+                                    },
+                                    {
+                                                "label": "45-54",
+                                "value": 7.52
+                                    },
+                                    {
+                                                "label": "55-64",
+                                "value": 3.57
+                                    },
+                                    {
+                                                "label": "Over65",
+                                "value": 3.86
+                                    }
+                        ],
+                        "gender_data": [
+                                    {
+                                                "label": "FEMALE",
+                                "value": 9.81
+                                    },
+                                    {
+                                                "label": "MALE",
+                                "value": 90.19
+                        }
+                ],
+                "top_photos": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Impressions\":3603199,\"photo_url\":\"http://pbs.twimg.com/media/G1eomulWYAAzuG1.jpg\"},{\"tweetId\":\"1969771166949646688\",\"text\":\"\ud83d\udea8 \ud835\udddf\ud835\uddd8 \ud835\udde3\ud835\udde6\ud835\uddda \ud835\udde9\ud835\udde2\ud835\udde8\ud835\udddf\ud835\uddd4\ud835\udddc\ud835\udde7 \ud835\udddd\ud835\udde2\ud835\udde8\ud835\uddd8\ud835\udde5 \ud835\udddf\ud835\uddd8 \ud835\uddd6\ud835\udddf\ud835\uddd4\ud835\udde6\ud835\udde6\ud835\udddc\ud835\udde4\ud835\udde8\ud835\uddd8 \ud835\udddf\ud835\udde8\ud835\udde1\ud835\uddd7\ud835\udddc \ud835\uddd4\u0300 \ud835\udfed\ud835\udff1\ud835\udddb \ud835\udde2\ud835\udde8 \ud835\udfed\ud835\udff3\ud835\udddb ! \ud83d\udc99\ud83e\udd0d \u26a1\ufe0f \u2764\ufe0f\ud83d\udc99\\n \\nIl est impensable pour le club parisien et Nasser Al-Khela\u00effi \ud83c\uddf6\ud83c\udde6 de ne pas assister \u00e0 la soir\u00e9e du Ballon d\u2019Or. \u274c\ud83c\udf15\\n\\nLe pr\u00e9sident du PSG pourrait donc privil\u00e9gier\u2026 https://t.co/qRo7P3Nq6d\",\"Impressions\":3390709,\"photo_url\":\"http://pbs.twimg.com/media/G1YICGtXAAAjb3q.jpg\"},{\"tweetId\":\"1969771166949646688\",\"text\":\"\ud83d\udea8 \ud835\udddf\ud835\uddd8 \ud835\udde3\ud835\udde6\ud835\uddda \ud835\udde9\ud835\udde2\ud835\udde8\ud835\udddf\ud835\uddd4\ud835\udddc\ud835\udde7 \ud835\udddd\ud835\udde2\ud835\udde8\ud835\uddd8\ud835\udde5 \ud835\udddf\ud835\uddd8 \ud835\uddd6\ud835\udddf\ud835\uddd4\ud835\udde6\ud835\udde6\ud835\udddc\ud835\udde4\ud835\udde8\ud835\uddd8 \ud835\udddf\ud835\udde8\ud835\udde1\ud835\uddd7\ud835\udddc \ud835\uddd4\u0300 \ud835\udfed\ud835\udff1\ud835\udddb \ud835\udde2\ud835\udde8 \ud835\udfed\ud835\udff3\ud835\udddb ! \ud83d\udc99\ud83e\udd0d \u26a1\ufe0f \u2764\ufe0f\ud83d\udc99\\n \\nIl est impensable pour le club parisien et Nasser Al-Khela\u00effi \ud83c\uddf6\ud83c\udde6 de ne pas assister \u00e0 la soir\u00e9e du Ballon d\u2019Or. \u274c\ud83c\udf15\\n\\nLe pr\u00e9sident du PSG pourrait donc privil\u00e9gier\u2026 https://t.co/qRo7P3Nq6d\",\"Impressions\":3390709,\"photo_url\":\"http://pbs.twimg.com/media/G1YIKqHWUAA6P5o.jpg\"},{\"tweetId\":\"1969771166949646688\",\"text\":\"\ud83d\udea8 \ud835\udddf\ud835\uddd8 \ud835\udde3\ud835\udde6\ud835\uddda \ud835\udde9\ud835\udde2\ud835\udde8\ud835\udddf\ud835\uddd4\ud835\udddc\ud835\udde7 \ud835\udddd\ud835\udde2\ud835\udde8\ud835\uddd8\ud835\udde5 \ud835\udddf\ud835\uddd8 \ud835\uddd6\ud835\udddf\ud835\uddd4\ud835\udde6\ud835\udde6\ud835\udddc\ud835\udde4\ud835\udde8\ud835\uddd8 \ud835\udddf\ud835\udde8\ud835\udde1\ud835\uddd7\ud835\udddc \ud835\uddd4\u0300 \ud835\udfed\ud835\udff1\ud835\udddb \ud835\udde2\ud835\udde8 \ud835\udfed\ud835\udff3\ud835\udddb ! \ud83d\udc99\ud83e\udd0d \u26a1\ufe0f \u2764\ufe0f\ud83d\udc99\\n \\nIl est impensable pour le club parisien et Nasser Al-Khela\u00effi \ud83c\uddf6\ud83c\udde6 de ne pas assister \u00e0 la soir\u00e9e du Ballon d\u2019Or. \u274c\ud83c\udf15\\n\\nLe pr\u00e9sident du PSG pourrait donc privil\u00e9gier\u2026 https://t.co/qRo7P3Nq6d\",\"Impressions\":3390709,\"photo_url\":\"http://pbs.twimg.com/media/G1YIKI3XoAAWGiK.jpg\"},{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Impressions\":2688111,\"photo_url\":\"http://pbs.twimg.com/media/G1douL0XwAAWjH-.jpg\"}]",
+                "top_gifs": "[{\"tweetId\":\"1970184450572001686\",\"text\":\"LIEN FOOT EN DIRECT \u26bd\ufe0f\\n\\nLes fr\u00e8res si vous cherchez un t\u00e9l\u00e9gram pour voir le match de PARIS contre MARSEILLE \ud83d\udc49LIEN DU LIVE STREAM EN BIO\\n\\nMARSEILLE (OM) - PARIS SG (PSG) \\n\\n\ud83c\udf81LIKE POUR ETRE DIRECT ACCEPTER SUR LE CANAL  \ud83d\udc4d\u2705\\n\\n#OMPSG #Ligue1 #Ligue1McDonalds https://t.co/EvuGyuzKcg\",\"Impressions\":249666,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eATtrXYAE5Oxy.jpg\"},{\"tweetId\":\"1969783768173932737\",\"text\":\"Il y a quand m\u00eame des supporters de football qui pr\u00e9f\u00e8rent regarder une c\u00e9r\u00e9monie qu\u2019un match de leur \u00e9quipe.\\nC\u2019est comme si un cin\u00e9phile pr\u00e9f\u00e9rait regarder les Oscar plut\u00f4t que de voir un film.\\nLes supporters du #PSG ont atteint un degr\u00e9 de footixerie in\u00e9galable.\\n#TeamOM #OMPSG https://t.co/HOfVvzxyr8\",\"Impressions\":198920,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1YT5BjXAAAaG2-.jpg\"},{\"tweetId\":\"1970131272774078795\",\"text\":\"TU GAL\u00c8RE \u00c0 AVOIR UN LIEN POUR PSG MARSEILLE ????\\n\\nLe Match et sur mon canal Telegram le lien du match de L\u2019OM contre Paris saint Germain  en live le lien et en bio \\n\\nN\u2019oublie pas de like ce tweet avant de rejoindre pour que je t\u2019accepte sur le canal\u2764\ufe0f\\n\\n#OMPSG #Ligue1McDonalds https://t.co/t6ChQFKxLA\",\"Impressions\":183931,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1dP8opWIAA_Ptc.jpg\"},{\"tweetId\":\"1970193146580476210\",\"text\":\"TU GAL\u00c8RE \u00c0 AVOIR UN LIEN POUR PSG MARSEILLE EL CLASSICO ? \\n\\nLe Match est  sur mon canal Telegram  L\u2019OM contre Paris saint Germain  en live le lien et en bio \\n\\nN\u2019oublie pas de like ce tweet avant de rejoindre pour que je t\u2019accepte sur le canal\ud83d\udc9c\\n\\n#OMPSG #Ligue1McDonalds https://t.co/FkeoI7LBjD\",\"Impressions\":170888,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eIOMHWUAAC1Uz.jpg\"},{\"tweetId\":\"1970235626126721272\",\"text\":\"J\u2019ai vu la France gagner la Coupe du Monde, le PSG gagner la LDC et Dembele gagner le Ballon d\u2019Or merci pour tout le football tu peux plus rien faire pour moi tu m\u2019a d\u00e9j\u00e0 tout donn\u00e9 \u2764\ufe0f https://t.co/eXDQ2tWk3g\",\"Impressions\":149471,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eu2u3WQAAtJnd.jpg\"}]",
+                "top_videos": "[{\"tweetId\":\"1970195725616325124\",\"text\":\"\u00ab \ud835\uddd8\ud835\udde7 \ud835\udde2\ud835\udde8\ud835\udde6\ud835\udde0\ud835\uddd4\ud835\udde1\ud835\uddd8 \ud83c\uddeb\ud83c\uddf7 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7\u2019\ud835\udde2\ud835\udde5\ud835\udde5\ud835\udde5\ud835\udde5\ud835\udde5\ud835\udde5\ud835\udde5\ud835\udde5\ud835\udde5\ud835\udde5 \ud83c\udfb6\ud83c\udf15 \u00bb\\n\\nL\u2019entr\u00e9e de la rockstar Ousmane Demb\u00e9l\u00e9 \ud83d\ude0e\ud83d\ude0e\ud83d\ude0e\\n\\nLa hype est folle #BallonDor \\n\\nLE PSG EST ARRIV\u00c9 \u2764\ufe0f\ud83d\udc99\\n\\n\ud83c\udfa5 @lequipe \\n\\nhttps://t.co/QPwsorILiz\",\"Impressions\":709518,\"video_url\":\"https://video.twimg.com/amplify_video/1970195530190934016/vid/avc1/1920x1080/SyaiUuuOq2d5OUSb.mp4?tag=16\",\"photo_url\":\"http://pbs.twimg.com/media/G1eKZFaWsAA1IhL.jpg\",\"video_views\":422952},{\"tweetId\":\"1970176573190881421\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/fyYFxN72CQ\",\"Impressions\":1332551,\"video_url\":\"https://video.twimg.com/amplify_video/1970130586015526912/vid/avc1/1920x1080/9ikjLELQMjf-YvSw.mp4\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970130586015526912/img/gse4vAd7vCf-PGDq.jpg\",\"video_views\":380454},{\"tweetId\":\"1970500781695553740\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! LA LIGUE ACCORDE LE BUT DE L\u2019OM FACE AU PSG \u00c0 MARQUINHOS (CSC) ! \ud83d\ude33\ud83c\uddeb\ud83c\uddf7\\n\\nNayef Aguerd n\u2019a pas inscrit son deuxi\u00e8me but de la saison. \u274c\\n  https://t.co/MMYeQw1762\",\"Impressions\":618692,\"video_url\":\"https://video.twimg.com/amplify_video/1970240443871903744/vid/avc1/1080x1350/IVCExY9xyQ4O_Msq.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970240443871903744/img/sOdKvU_xUvmatHdR.jpg\",\"video_views\":363725},{\"tweetId\":\"1970251797160771620\",\"text\":\"#BallondOr Winners. https://t.co/sP7IgDzyq0\",\"Impressions\":1208344,\"video_url\":\"https://video.twimg.com/amplify_video/1970251772024295424/vid/avc1/1080x1920/Wf42AE2ICEIoWjtl.mp4?tag=16\",\"photo_url\":\"http://pbs.twimg.com/media/G1e9jS3XUAEYhKB.jpg\",\"video_views\":361465},{\"tweetId\":\"1970216684800876954\",\"text\":\"14 ANS APR\u00c8S ON A BATTU LE PSG AU V\u00c9LODROME \ud83d\ude2d\ud83d\ude2d\ud83e\ude75\ud83e\ude75\ud83e\udd0d #TeamOM https://t.co/BBJ8u3Zm55\",\"Impressions\":1014831,\"video_url\":\"https://video.twimg.com/amplify_video/1970216615477223424/vid/avc1/480x576/0PmNkyE41qLTBZq_.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970216615477223424/img/l_1ZYzpWPZTu3iS2.jpg\",\"video_views\":336371}]",
+                "top_posts": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Impressions\":3603199},{\"tweetId\":\"1969771166949646688\",\"text\":\"\ud83d\udea8 \ud835\udddf\ud835\uddd8 \ud835\udde3\ud835\udde6\ud835\uddda \ud835\udde9\ud835\udde2\ud835\udde8\ud835\udddf\ud835\uddd4\ud835\udddc\ud835\udde7 \ud835\udddd\ud835\udde2\ud835\udde8\ud835\uddd8\ud835\udde5 \ud835\udddf\ud835\uddd8 \ud835\uddd6\ud835\udddf\ud835\uddd4\ud835\udde6\ud835\udde6\ud835\udddc\ud835\udde4\ud835\udde8\ud835\uddd8 \ud835\udddf\ud835\udde8\ud835\udde1\ud835\uddd7\ud835\udddc \ud835\uddd4\u0300 \ud835\udfed\ud835\udff1\ud835\udddb \ud835\udde2\ud835\udde8 \ud835\udfed\ud835\udff3\ud835\udddb ! \ud83d\udc99\ud83e\udd0d \u26a1\ufe0f \u2764\ufe0f\ud83d\udc99\\n \\nIl est impensable pour le club parisien et Nasser Al-Khela\u00effi \ud83c\uddf6\ud83c\udde6 de ne pas assister \u00e0 la soir\u00e9e du Ballon d\u2019Or. \u274c\ud83c\udf15\\n\\nLe pr\u00e9sident du PSG pourrait donc privil\u00e9gier\u2026 https://t.co/qRo7P3Nq6d\",\"Impressions\":3390709},{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Impressions\":2688111},{\"tweetId\":\"1969822221901181399\",\"text\":\"Je comprends les Marseillais qui veulent jouer le match demain avec les absents et tout, pas de probl\u00e8me et c'est logique. En revanche si je suis le PSG j'envoie une \u00e9quipe Bis et j'en ai rien \u00e0 faire du match car je verrais \u00e7a comme une injustice de pas trouver une autre date.\u2026\",\"Impressions\":1981125},{\"tweetId\":\"1970176573190881421\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/fyYFxN72CQ\",\"Impressions\":1332551}]",
+                "top_posts_reply": "[{\"tweetId\":\"1970163332364836939\",\"text\":\"PEPE CHICKEN GRATUIT POUR LE CLASSICO ! \u26bd\ufe0f\\n\\nRT + Tweet ton prono pour OM/PSG avec #PepeChickenDevantLeMatch, on distribue des codes al\u00e9atoirement \u00e0 certaines r\u00e9ponses \u00e0 la mi-temps pour go\u00fbter les nouveaut\u00e9s \ud83d\udc14\ud83d\udd25 https://t.co/0M2VfZCZdU\",\"Reply\":1707},{\"tweetId\":\"1969757995899781497\",\"text\":\"Le PSG disputera la plus belle affiche de la L1 pendant que le monde entier regardera la c\u00e9r\u00e9monie du Ballon d'or qui lui rendra hommage. Vous \u00eates des as, les gars.\",\"Reply\":1152},{\"tweetId\":\"1970147110868623526\",\"text\":\"DIFFUSION MARSEILLE \ud83e\ude90\\n\\nMATCH DE PARIS SAINT GERMAIN \ud83c\udf7f\\n\\n\ud83d\udea8( lien du stream en bio )\ud83d\udea8\\n\\n( LIEN LIVE GRATUIT SUR TELEGRAM )\\n\\nMARSEILLE VS PSG\\n\\nC\u00c9R\u00c9MONIE BALLON D\u2019OR\\n\\n\ud83d\udc9c LIKE + RT POUR REJOINDRE LE STREAM INSTANTAN\u00c9MENT \ud83d\udc9c\\n\\n#OMPSG #Ligue1McDonalds #BallonDor https://t.co/lWD83yeZVo\",\"Reply\":827},{\"tweetId\":\"1969751667294843227\",\"text\":\"Le Classique @OM_Officiel - @PSG_inside report\u00e9 au lundi 22 septembre \u00e0 20h00.\\n\\nEn raison des fortes intemp\u00e9ries pr\u00e9vues sur la r\u00e9gion marseillaise, la rencontre Olympique de Marseille-Paris Saint-Germain, comptant pour la 5e journ\u00e9e de @Ligue1  et pr\u00e9vue ce soir, a \u00e9t\u00e9 report\u00e9e\u2026\",\"Reply\":789},{\"tweetId\":\"1970215296536281184\",\"text\":\"\ud83d\udea8 \ud835\udddf\u2019\ud835\udde2\ud835\udde0 \ud835\uddd7\ud835\uddd8\u0301\ud835\udde5\ud835\uddd4\ud835\udddc\ud835\udddf\ud835\udddf\ud835\uddd8 \ud835\udddf\ud835\uddd4 \ud835\udde0\ud835\uddd4\ud835\uddd6\ud835\udddb\ud835\udddc\ud835\udde1\ud835\uddd8 \ud835\udde3\ud835\udde6\ud835\uddda !!!!! \ud83d\udc99\ud83e\udd0d\\n\\n\ud835\udde8\ud835\udde1\ud835\uddd8 \ud835\udde9\ud835\udddc\ud835\uddd6\ud835\udde7\ud835\udde2\ud835\udddc\ud835\udde5\ud835\uddd8 \ud83d\udff0 \ud835\udde8\ud835\udde1\ud835\uddd8 \ud835\udde3\ud835\udde5\ud835\uddd8\ud835\udde0\ud835\udddc\ud835\uddd8\u0300\ud835\udde5\ud835\uddd8 \ud835\uddd7\ud835\uddd8\ud835\udde3\ud835\udde8\ud835\udddc\ud835\udde6 \ud835\udfed\ud835\udff0 \ud835\uddd4\ud835\udde1\ud835\udde6 \ud835\uddd4\u0300 \ud835\uddd7\ud835\udde2\ud835\udde0\ud835\udddc\ud835\uddd6\ud835\udddc\ud835\udddf\ud835\uddd8 \ud835\uddd8\ud835\udde1 \ud835\udddf\ud835\udddc\ud835\uddda\ud835\udde8\ud835\uddd8 \ud835\udfed \ud835\udde3\ud835\udde2\ud835\udde8\ud835\udde5 \ud835\udddf\u2019\ud835\udde2\ud835\udde0 \ud835\uddd7\ud835\uddd4\ud835\udde1\ud835\udde6 \ud835\udddf\ud835\uddd8 \ud835\uddd6\ud835\udddf\ud835\uddd4\ud835\udde6\ud835\udde6\ud835\udddc\ud835\udde4\ud835\udde8\ud835\uddd8 !!! \u2705\\n\\nLe PSG vit un sale d\u00e9but de soir\u00e9e\u2026 https://t.co/9u0tWxLOYr\",\"Reply\":752}]",
+                "top_posts_favorite": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Favorite\":59766},{\"tweetId\":\"1969822221901181399\",\"text\":\"Je comprends les Marseillais qui veulent jouer le match demain avec les absents et tout, pas de probl\u00e8me et c'est logique. En revanche si je suis le PSG j'envoie une \u00e9quipe Bis et j'en ai rien \u00e0 faire du match car je verrais \u00e7a comme une injustice de pas trouver une autre date.\u2026\",\"Favorite\":18935},{\"tweetId\":\"1970208728583385436\",\"text\":\"Notre entra\u00eeneur Luis Enrique, remporte le Troph\u00e9e Cruyff \ud83e\udde0\ud83d\udc4f\\n\\n#ballondor https://t.co/WRAbBw01Jq\",\"Favorite\":16911},{\"tweetId\":\"1970438530515247514\",\"text\":\"\ud83d\udd2e\ud83d\udc40\ud83d\udc4f https://t.co/TJhsRoysPU\",\"Favorite\":15804},{\"tweetId\":\"1970230821505101913\",\"text\":\"\ud83d\udea8\ud83c\uddeb\ud83c\uddf7\ud83c\udf15 FLASH | EXPLOSION DE JOIE des supporters du PSG \u00e0 l\u2019annonce du Ballon d\u2019Or d\u2019Ousmane Demb\u00e9l\u00e9 aux abords du th\u00e9\u00e2tre du Ch\u00e2telet. (@CLPRESSFR) https://t.co/ErodP4Dtt7\",\"Favorite\":15126}]",
+                "top_posts_retweet": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Retweet\":18052},{\"tweetId\":\"1970218907790385549\",\"text\":\"Quelle saison historique... \ud83d\udcda\ud83c\udfc6\\nLe Paris Saint-Germain, club masculin de l'ann\u00e9e ! \ud83e\udd29\ud83d\udc4f\\n\\n#ballondor https://t.co/4Xq3lfi9SU\",\"Retweet\":3619},{\"tweetId\":\"1970208728583385436\",\"text\":\"Notre entra\u00eeneur Luis Enrique, remporte le Troph\u00e9e Cruyff \ud83e\udde0\ud83d\udc4f\\n\\n#ballondor https://t.co/WRAbBw01Jq\",\"Retweet\":3106},{\"tweetId\":\"1969822221901181399\",\"text\":\"Je comprends les Marseillais qui veulent jouer le match demain avec les absents et tout, pas de probl\u00e8me et c'est logique. En revanche si je suis le PSG j'envoie une \u00e9quipe Bis et j'en ai rien \u00e0 faire du match car je verrais \u00e7a comme une injustice de pas trouver une autre date.\u2026\",\"Retweet\":2587},{\"tweetId\":\"1970243016498741267\",\"text\":\"Eh Ousmane Ballon d\u2019Or \ud83d\udde3\ufe0f\ud83e\udd29\\n\\n#ballondor https://t.co/ElxKnmzj8Q\",\"Retweet\":2540}]",
+                "top_posts_quote": "[{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Quote\":1606},{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Quote\":672},{\"tweetId\":\"1969751667294843227\",\"text\":\"Le Classique @OM_Officiel - @PSG_inside report\u00e9 au lundi 22 septembre \u00e0 20h00.\\n\\nEn raison des fortes intemp\u00e9ries pr\u00e9vues sur la r\u00e9gion marseillaise, la rencontre Olympique de Marseille-Paris Saint-Germain, comptant pour la 5e journ\u00e9e de @Ligue1  et pr\u00e9vue ce soir, a \u00e9t\u00e9 report\u00e9e\u2026\",\"Quote\":628},{\"tweetId\":\"1970176573190881421\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/fyYFxN72CQ\",\"Quote\":575},{\"tweetId\":\"1970162876523729278\",\"text\":\"Ranked at the 19th place for the 2025 Men's Ballon d'Or! \\n\\nJoao Neves\\n@PSG_inside\\n@selecaoportugal\\n\\n#ballondor https://t.co/eP9dvWur52\",\"Quote\":431}]",
+                "verticals": "News,Politics,Business,Crypto,Console & PC gaming",
+                "top_hashtags": "OMPSG,ballondor,BallonDor,TeamOM,PSG,Ligue1McDonalds,TeamPSG,Ligue1,BallondOr,EDS",
+                "top_mentions": "PSG_inside,FCBarcelona,SEFutbol,Ligue1,Pedri,OM_Officiel,ballondor,ActuFoot_,equipedefrance,lequipe",
+                "entity_names": "Soccer,Paris Saint-Germain,Ligue 1,France - Soccer,Olympique Marseille vs Paris Saint-Germain,La Liga,Spain - Soccer,FC Barcelona,Sports events,Ballon d'Or",
+                "top_creators": "PSG_inside,ballondor,ActuFoot_,lnstantFoot,RMCsport,FCBarcelona,_BeFootball,footmercato,Footballogue,AlertesInfos",
+                "daily_data_json": "[{\"post_date\":\"2025-09-03\",\"no_of_posts\":668,\"top_post_day\":{\"tweetId\":\"1963233166438674797\",\"text\":\"💬 \\\"One more in the family.\\\"\\n\\nShot on Google Pixel 🤳\",\"Impressions\":514479}},{\"post_date\":\"2025-09-04\",\"no_of_posts\":618,\"top_post_day\":{\"tweetId\":\"1963557658209718702\",\"text\":\"Turn up the volume 🔊\\n\\nOur NTS Collection, shot on Google Pixel 🤳\",\"Impressions\":40570}},{\"post_date\":\"2025-09-05\",\"no_of_posts\":462,\"top_post_day\":{\"tweetId\":\"1963905446256787512\",\"text\":\"Our number 23 is here to stay 🏡\\n\\nShot on Google Pixel 🤳\",\"Impressions\":26960}},{\"post_date\":\"2025-09-06\",\"no_of_posts\":505,\"top_post_day\":{\"tweetId\":\"1964348112790585794\",\"text\":\"In the house. 🏡\\n\\nShot on Google Pixel.\",\"Impressions\":65025}},{\"post_date\":\"2025-09-07\",\"no_of_posts\":498,\"top_post_day\":{\"tweetId\":\"1964818461839720886\",\"text\":\"Rice rising highest ⚡️\\n\\nShot on Google Pixel 📲\",\"Impressions\":42717}},{\"post_date\":\"2025-09-08\",\"no_of_posts\":351,\"top_post_day\":{\"tweetId\":\"1964930661984448798\",\"text\":\"💨 Pixel 10 Pro AI imeharibu kazi\\n\\nGoogle Pixel 10 Pro vs Xiaomi 15 Ultra\",\"Impressions\":2171}},{\"post_date\":\"2025-09-09\",\"no_of_posts\":1341,\"top_post_day\":{\"tweetId\":\"1965476741981294603\",\"text\":\"In the building. In the zone.\\n\\nShot on Google Pixel 🤳\",\"Impressions\":49859}},{\"post_date\":\"2025-09-10\",\"no_of_posts\":1281,\"top_post_day\":{\"tweetId\":\"1965716841151545813\",\"text\":\"New surroundings for Norgaard 🤩\\n\\nOur midfield metronome takes us behind-the-scenes of PL Media Day on the new Google Pixel 10 🤳\",\"Impressions\":137100}},{\"post_date\":\"2025-09-11\",\"no_of_posts\":538,\"top_post_day\":{\"tweetId\":\"1966041520227889324\",\"text\":\"Clinical from @MarcGuehi13! 🤝\\n\\nShot on Google Pixel 📲\",\"Impressions\":45062}},{\"post_date\":\"2025-09-12\",\"no_of_posts\":518,\"top_post_day\":{\"tweetId\":\"1966482977128624154\",\"text\":\"Stepping things up 👊\\n\\nShot on Google Pixel 🤳\",\"Impressions\":97515}},{\"post_date\":\"2025-09-13\",\"no_of_posts\":409,\"top_post_day\":{\"tweetId\":\"1966873768384753732\",\"text\":\"Impacting things 💥\\n\\nThe Premier League Player of the Match, Shot on Google Pixel 🤳\",\"Impressions\":82061}},{\"post_date\":\"2025-09-14\",\"no_of_posts\":474,\"top_post_day\":{\"tweetId\":\"1967181764406677939\",\"text\":\"Doubling up 2️⃣\\n\\nShot on Google Pixel 🤳\",\"Impressions\":37127}},{\"post_date\":\"2025-09-15\",\"no_of_posts\":377,\"top_post_day\":{\"tweetId\":\"1967556560076546319\",\"text\":\"The Google Pixel 10 looks bad.\\n\\nThose thick bezels dont look premium at all.\",\"Impressions\":4232}},{\"post_date\":\"2025-09-16\",\"no_of_posts\":344,\"top_post_day\":{\"tweetId\":\"1968028457415348445\",\"text\":\"I think this really might be the year of the Omarchy Framework laptop and Google Pixel\",\"Impressions\":1612}},{\"post_date\":\"2025-09-17\",\"no_of_posts\":389,\"top_post_day\":{\"tweetId\":\"1968270146973433961\",\"text\":\"💨 Camera ya Vivo X300 hizi sifa sasa\\n\\nSamsung, iPhone na Google Pixel hapa ndio huwa wanafeli\",\"Impressions\":2035}},{\"post_date\":\"2025-09-18\",\"no_of_posts\":298,\"top_post_day\":{\"tweetId\":\"1968666143536660970\",\"text\":\"Available & Licenced Leagues of Women's Football in #FM26\\n\\n🏴󠁧󠁢󠁥󠁮󠁧󠁿 Barclay's Super League 1 & 2\\n🇩🇪 Google Pixel Frauen-Bundesliga\",\"Impressions\":1784}},{\"post_date\":\"2025-09-19\",\"no_of_posts\":364,\"top_post_day\":{\"tweetId\":\"1969121818234572819\",\"text\":\"A selfie from the skipper 🤩\\n\\nShot on Google Pixel 🤳\",\"Impressions\":9195}},{\"post_date\":\"2025-09-20\",\"no_of_posts\":394,\"top_post_day\":{\"tweetId\":\"1969255710224494960\",\"text\":\"I tried every latest phone and for me,\\nZfold 7 is the best and my number 1 pick.\\n2. Google pixel 10 pro XL\",\"Impressions\":976}},{\"post_date\":\"2025-09-21\",\"no_of_posts\":397,\"top_post_day\":{\"tweetId\":\"1969753941056602240\",\"text\":\"@BigJamzLdn Just stay flagship and you will be fine. Find out what you like between the high end Google pixel and Samsung Galaxy\",\"Impressions\":2916}},{\"post_date\":\"2025-09-22\",\"no_of_posts\":414,\"top_post_day\":{\"tweetId\":\"1970250503779922325\",\"text\":\"Our winners together ❤️\\n\\nShot on Google Pixel 📲\",\"Impressions\":37100}},{\"post_date\":\"2025-09-23\",\"no_of_posts\":382,\"top_post_day\":{\"tweetId\":\"1970495747608191150\",\"text\":\"IM LOSING MY MIND HE REPLIED TO THIS GOOGLE PIXEL AD ON HIS IPHONE LMFFAOOOOOO\",\"Impressions\":64936}},{\"post_date\":\"2025-09-24\",\"no_of_posts\":297,\"top_post_day\":{\"tweetId\":\"1970980126172016799\",\"text\":\"💬 \\\"A special one today.\\\"\\n\\nShot on Google Pixel 🤳\",\"Impressions\":61968}},{\"post_date\":\"2025-09-25\",\"no_of_posts\":288,\"top_post_day\":{\"tweetId\":\"1971138490911031804\",\"text\":\"The Last Days of Highbury Collection, shot on Google Pixel 🤳\\n\\nHead online to deck out your matchday look now, Gooners 🔗\",\"Impressions\":28862}},{\"post_date\":\"2025-09-26\",\"no_of_posts\":283,\"top_post_day\":{\"tweetId\":\"1971545296686498003\",\"text\":\"Focused on Saturday's task 👊\\n\\nShot on Google Pixel 🤳\",\"Impressions\":8745}},{\"post_date\":\"2025-09-27\",\"no_of_posts\":213,\"top_post_day\":{\"tweetId\":\"1971879950706987440\",\"text\":\"I've spent a few weeks with the Google Pixel 10 Pro XL.\\n\\nMy final verdict about this phone is that.... I can easily recommend it only for Pixel fans\",\"Impressions\":6051}},{\"post_date\":\"2025-09-28\",\"no_of_posts\":256,\"top_post_day\":{\"tweetId\":\"1972421064019124330\",\"text\":\"Our number 6️⃣\\n\\n🤳 Shot on Google Pixel\",\"Impressions\":93137}},{\"post_date\":\"2025-09-29\",\"no_of_posts\":344,\"top_post_day\":{\"tweetId\":\"1972575032846274749\",\"text\":\"From the pitch to professionals.\\n\\nWatch as Emily, Vic and Laia's childhood dream jobs come to life 🏄 👩🏻‍⚕️ 💼 \\n\\nBrought to life with Gemini on Google Pixel 10 🤳\",\"Impressions\":14709}},{\"post_date\":\"2025-09-30\",\"no_of_posts\":286,\"top_post_day\":{\"tweetId\":\"1972979989868880162\",\"text\":\"William Saliba 🤝 The Arsenal\\n\\nShot on Google Pixel 🤳\",\"Impressions\":50219}}]",
+                "ai_summary": "The 'Clubs' category shows strong performance with 351,783 posts generating 181,669,586 impressions and high engagement, including 1,995,008 favorites and 21,409,025 video views, indicating robust audience interaction. Content focuses on major football clubs like PSG and Olympique Marseille, with hashtags like #OMPSG and #PSG trending, while the audience is predominantly male (90.19%) and aged 25-34 (39.94%), with interests in football, news, and crypto. A strategic opportunity lies in leveraging high-performing creators like PSG_inside and capitalizing on video content, as seen with top posts about key matches and players like Ousmane Demb\u00e9l\u00e9, which garnered over 3.6M impressions."
+        },
+        {
+                "name": "Samsung Galaxy",
+                "impressions": 3117898,
+                "posts": 18410,
+                "reply": 1083,
+                "favorite": 10265,
+                "retweet": 1167,
+                "video_views": 146741,
+                "no_of_authors": 7352,
+                "engagement": 12515,
+                        "age_data": [
+                                    {
+                                                "label": "18-24",
+                                "value": 29.85
+                                    },
+                                    {
+                                                "label": "25-34",
+                                "value": 38.86
+                                    },
+                                    {
+                                                "label": "35-44",
+                                "value": 15.6
+                                    },
+                                    {
+                                                "label": "45-54",
+                                "value": 6.98
+                                    },
+                                    {
+                                                "label": "55-64",
+                                "value": 3.86
+                                    },
+                                    {
+                                                "label": "Over65",
+                                "value": 4.84
+                                    }
+                        ],
+                        "gender_data": [
+                                    {
+                                                "label": "FEMALE",
+                                                "value": 16.99
+                                    },
+                                    {
+                                                "label": "MALE",
+                                "value": 83.01
+                        }
+                ],
+                "top_photos": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Impressions\":3603199,\"photo_url\":\"http://pbs.twimg.com/media/G1eomulWYAAzuG1.jpg\"},{\"tweetId\":\"1970228698071867504\",\"text\":\"OUSMANE DEMB\u00c9L\u00c9 IS THE 2025 MEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/xLSvNVEh51\",\"Impressions\":2772531,\"photo_url\":\"http://pbs.twimg.com/media/G1en-wXWoAAIow6.jpg\"},{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Impressions\":2688111,\"photo_url\":\"http://pbs.twimg.com/media/G1douL0XwAAWjH-.jpg\"},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Impressions\":2578964,\"photo_url\":\"http://pbs.twimg.com/media/G1fYqwMXEAAJKxG.jpg\"},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Impressions\":2578964,\"photo_url\":\"http://pbs.twimg.com/media/G1fYqwQXgAAp0Q0.jpg\"}]",
+                "top_gifs": "[{\"tweetId\":\"1970184450572001686\",\"text\":\"LIEN FOOT EN DIRECT \u26bd\ufe0f\\n\\nLes fr\u00e8res si vous cherchez un t\u00e9l\u00e9gram pour voir le match de PARIS contre MARSEILLE \ud83d\udc49LIEN DU LIVE STREAM EN BIO\\n\\nMARSEILLE (OM) - PARIS SG (PSG) \\n\\n\ud83c\udf81LIKE POUR ETRE DIRECT ACCEPTER SUR LE CANAL  \ud83d\udc4d\u2705\\n\\n#OMPSG #Ligue1 #Ligue1McDonalds https://t.co/EvuGyuzKcg\",\"Impressions\":249666,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eATtrXYAE5Oxy.jpg\"},{\"tweetId\":\"1970131272774078795\",\"text\":\"TU GAL\u00c8RE \u00c0 AVOIR UN LIEN POUR PSG MARSEILLE ????\\n\\nLe Match et sur mon canal Telegram le lien du match de L\u2019OM contre Paris saint Germain  en live le lien et en bio \\n\\nN\u2019oublie pas de like ce tweet avant de rejoindre pour que je t\u2019accepte sur le canal\u2764\ufe0f\\n\\n#OMPSG #Ligue1McDonalds https://t.co/t6ChQFKxLA\",\"Impressions\":183931,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1dP8opWIAA_Ptc.jpg\"},{\"tweetId\":\"1970193146580476210\",\"text\":\"TU GAL\u00c8RE \u00c0 AVOIR UN LIEN POUR PSG MARSEILLE EL CLASSICO ? \\n\\nLe Match est  sur mon canal Telegram  L\u2019OM contre Paris saint Germain  en live le lien et en bio \\n\\nN\u2019oublie pas de like ce tweet avant de rejoindre pour que je t\u2019accepte sur le canal\ud83d\udc9c\\n\\n#OMPSG #Ligue1McDonalds https://t.co/FkeoI7LBjD\",\"Impressions\":170888,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eIOMHWUAAC1Uz.jpg\"},{\"tweetId\":\"1970184793397555364\",\"text\":\"Ducouppp vu qu\u2019apparemment on veut respecter le r\u00e8glement, on peut arr\u00eater le match \u00e0 cause des \u00ab\u00a0Paris on t\u2019enc*le\u00a0\u00bb ouuu ? Nan je propose hein #OMPSG https://t.co/Hqo8nZR5WK\",\"Impressions\":143900,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eAn9sXcAAK-6L.jpg\"},{\"tweetId\":\"1970175787341955399\",\"text\":\"TU GAL\u00c8RE \u00c0 AVOIR UN LIEN POUR PSG MARSEILLE EL CLASSICO ? \\n\\nLe Match est  sur mon canal Telegram  L\u2019OM contre Paris saint Germain  en live le lien et en bio \\n\\nN\u2019oublie pas de like ce tweet avant de rejoindre pour que je t\u2019accepte sur le canal\u2764\ufe0f\\n\\n#OMPSG #Ligue1McDonalds https://t.co/r4qHYkzx9h\",\"Impressions\":134459,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1d4bw8XQAAB3ek.jpg\"}]",
+                "top_videos": "[{\"tweetId\":\"1970244735349727347\",\"text\":\"\u00ab \ud835\ude45\ud835\ude4a\ud835\ude3c\u0303\ud835\ude4a \ud835\ude49\ud835\ude40\ud835\ude51\ud835\ude40\ud835\ude4e, \ud835\ude45\ud835\ude4a\ud835\ude3c\u0303\ud835\ude4a \ud835\ude49\ud835\ude40\ud835\ude51\ud835\ude40\ud835\ude4e \u00bb \ud83d\udc8e\ud83c\udfb6\\n\\nLes supporters parisiens \u00e9taient pr\u00e9sents autour du th\u00e9\u00e2tre du Ch\u00e2telet pour dire au revoir et f\u00e9liciter Jo\u00e3o Neves.  \ud83d\udc4f\ud83c\udffc\\n\\n\ud83c\udfa5 \u2022 @ballondor | #BallonDor\u00a0\\n\\n https://t.co/pxFu3EPv3L\",\"Impressions\":2703061,\"video_url\":\"https://video.twimg.com/amplify_video/1970241156211408896/vid/avc1/1280x720/KqqGCdvM1ZgkP0qp.mp4?tag=14\",\"photo_url\":\"http://pbs.twimg.com/media/G1ez43WWsAAtwjC.jpg\",\"video_views\":774200},{\"tweetId\":\"1970263238475645086\",\"text\":\"\ud83d\udea8\ud83d\udea8 MOUNIR NASRAOUI, P\u00c8RE DE LAMINE YAMAL \ud83c\uddea\ud83c\uddf8 :\\n\\n\u00ab Quelque chose de tr\u00e8s \u00e9trange s'est produit\u2026 \ud835\uddd6\u2019\ud835\uddd8\ud835\udde6\ud835\udde7 \ud835\udde3\ud835\udddf\ud835\udde8\ud835\udde6 \ud835\uddda\ud835\udde5\ud835\uddd4\ud835\udde1\ud835\uddd7 \ud835\uddd7\ud835\udde2\ud835\udde0\ud835\udde0\ud835\uddd4\ud835\uddda\ud835\uddd8 \ud835\udde0\ud835\udde2\ud835\udde5\ud835\uddd4\ud835\udddf \ud835\uddd6\ud835\uddd4\ud835\udde8\ud835\udde6\ud835\uddd8\u0301 \ud835\uddd4\u0300 \ud835\udde8\ud835\udde1 \ud835\uddd8\u0302\ud835\udde7\ud835\udde5\ud835\uddd8 \ud835\udddb\ud835\udde8\ud835\udde0\ud835\uddd4\ud835\udddc\ud835\udde1. \ud83d\ude24\\n\\nLamine est de loin le meilleur de tous. \u00bb #BallonDor \\n\\nhttps://t.co/uzo74uxXGB\",\"Impressions\":1320197,\"video_url\":\"https://video.twimg.com/amplify_video/1970261177058906113/vid/avc1/2560x1440/g6MWMcu7N1PuZuqz.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970261177058906113/img/uW38E_5t2o1j5HpU.jpg\",\"video_views\":735282},{\"tweetId\":\"1970061103825891497\",\"text\":\"\ud83d\udea8\ud83d\udea8\ud83c\udf99\ufe0f | \ud835\uddd6\ud835\udde5\ud835\udddc\ud835\udde6\ud835\udde7\ud835\udddc\ud835\uddd4\ud835\udde1\ud835\udde2 \ud835\udde5\ud835\udde2\ud835\udde1\ud835\uddd4\ud835\udddf\ud835\uddd7\ud835\udde2 \ud83c\uddf5\ud83c\uddf9 \ud835\uddd4\u0300 \ud835\udde3\ud835\udde5\ud835\udde2\ud835\udde3\ud835\udde2\ud835\udde6 \ud835\uddd7\ud835\udde8 #BallonDor \ud835\udfee\ud835\udfec\ud835\udfee\ud835\udff0 :\\n\\n\u00ab Vin\u00edcius Jr. \ud83c\udde7\ud83c\uddf7 aurait d\u00fb remporter le Ballon d\u2019Or. Je n\u2019ai aucun probl\u00e8me \u00e0 le dire. C\u2019\u00e9tait injuste. \u2014 Ces gens-l\u00e0 font toujours la m\u00eame chose. \u00bb \ud83d\udd19\\n\\nGOAT ! \ud83d\udc10\\nhttps://t.co/DzLQwWP6Xx\",\"Impressions\":1250735,\"video_url\":\"https://video.twimg.com/amplify_video/1872694065533480960/vid/avc1/1920x1080/cjvb1952RrkBGME5.mp4?tag=16\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1872694065533480960/img/SkDthQA5hPkJmgJO.jpg\",\"video_views\":705780},{\"tweetId\":\"1970194884360368281\",\"text\":\"Lamine Yamal \ud83c\uddea\ud83c\uddf8 a ramen\u00e9 toute la famille. \ud83d\ude01\ud83e\udd70 #BallonDor \\n\\nhttps://t.co/dA5wkadm4K\",\"Impressions\":1883214,\"video_url\":\"https://video.twimg.com/amplify_video/1970194372688859136/vid/avc1/1920x1080/0IA-DLJwt0RQYiNk.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970194372688859136/img/U-KntT65jUbGfdfp.jpg\",\"video_views\":634847},{\"tweetId\":\"1969795465047576585\",\"text\":\"\ud83d\udea8ILS L'ONT FAIT !\\n\\nGrimkujow et Theorus ont march\u00e9 de Paris \u00e0 Levallois en live \ud83e\udd2f\\n\\nF\u00e9licitation \u00e0 eux pour cet exploit \ud83d\udc4f https://t.co/kTgvrekXMU\",\"Impressions\":1670992,\"video_url\":\"https://video.twimg.com/amplify_video/1969795330150445056/vid/avc1/1920x1080/3A8HdscOl3qqhfYZ.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1969795330150445056/img/yvz7hiPyOsyfFLth.jpg\",\"video_views\":590481}]",
+                "top_posts": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Impressions\":3603199},{\"tweetId\":\"1970228698071867504\",\"text\":\"OUSMANE DEMB\u00c9L\u00c9 IS THE 2025 MEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/xLSvNVEh51\",\"Impressions\":2772531},{\"tweetId\":\"1970244735349727347\",\"text\":\"\u00ab \ud835\ude45\ud835\ude4a\ud835\ude3c\u0303\ud835\ude4a \ud835\ude49\ud835\ude40\ud835\ude51\ud835\ude40\ud835\ude4e, \ud835\ude45\ud835\ude4a\ud835\ude3c\u0303\ud835\ude4a \ud835\ude49\ud835\ude40\ud835\ude51\ud835\ude40\ud835\ude4e \u00bb \ud83d\udc8e\ud83c\udfb6\\n\\nLes supporters parisiens \u00e9taient pr\u00e9sents autour du th\u00e9\u00e2tre du Ch\u00e2telet pour dire au revoir et f\u00e9liciter Jo\u00e3o Neves.  \ud83d\udc4f\ud83c\udffc\\n\\n\ud83c\udfa5 \u2022 @ballondor | #BallonDor\u00a0\\n\\n https://t.co/pxFu3EPv3L\",\"Impressions\":2703061},{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Impressions\":2688111},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Impressions\":2578964}]",
+                "top_posts_reply": "[{\"tweetId\":\"1970141782773043332\",\"text\":\"\ud83c\udfc6 The Ballon d\u2019Or is almost here\u2026\\n\\n\ud83c\udfa8 Win the Limited card with the special design of the Ballon d\u2019Or winner!\\n\\nTo enter:\\n\ud83e\udd1e Follow @Sorare\\n\ud83d\udd01 RT &amp; \u2764\ufe0f this post\\n\ud83d\udcdd Share your Ballon d\u2019Or Top 5 in order!\\n\\n\u23f0 Entries close at 10:30 PM CET\\n\\n#BallonDor #Sorare #Giveaway https://t.co/CeoQKR95on\",\"Reply\":2086},{\"tweetId\":\"1970426061541241171\",\"text\":\"Je vous pr\u00e9sente le #BallonDor fran\u00e7ais. https://t.co/8JvEcj9pUB\",\"Reply\":1291},{\"tweetId\":\"1969854668248350861\",\"text\":\"Avec nous, vous pourriez \u00eatre fiers de Paris. https://t.co/WeWzxgpebR\",\"Reply\":1069},{\"tweetId\":\"1969695432721805348\",\"text\":\"\ud83d\udea8\ud83c\uddeb\ud83c\uddf7 \ud835\uddd9\ud835\udddf\ud835\uddd4\ud835\udde6\ud835\udddb \ud835\udddc\ud835\udde1\ud835\uddd9\ud835\udde2 \u2014 L\u2019h\u00f4tel de ville de Paris a d\u00fb fermer ses portes lors des Journ\u00e9es du Patrimoine apr\u00e8s l\u2019intrusion de migrants clandestins se pr\u00e9sentant comme \u00ab mineurs isol\u00e9s \u00bb. https://t.co/RmmQXGniUb\",\"Reply\":1018},{\"tweetId\":\"1969787483362582846\",\"text\":\"Ce lundi soir, pas de match en Liga, pas de match en Bundesliga et pas pas de match en Premier League en raison du #BallonDor. Devinez o\u00f9 est-ce qu'on joue ? #OMPSG\",\"Reply\":974}]",
+                "top_posts_favorite": "[{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Favorite\":110764},{\"tweetId\":\"1970228698071867504\",\"text\":\"OUSMANE DEMB\u00c9L\u00c9 IS THE 2025 MEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/xLSvNVEh51\",\"Favorite\":83971},{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Favorite\":59766},{\"tweetId\":\"1970229073709301886\",\"text\":\"\ud835\udc76\ud835\udc96\ud835\udc94\ud835\udc8e\ud835\udc82\ud835\udc8f\ud835\udc86 \ud835\udc69\ud835\udc82\ud835\udc8d\ud835\udc8d\ud835\udc90\ud835\udc8f \ud835\udc85\u2019\ud835\udc76\ud835\udc93 \ud83c\udfc6\u2728\\n\\n\u00c0 jamais dans l\u2019Histoire \ud83c\uddeb\ud83c\uddf7\\n\\n#FiersdetreBleus #ballondor https://t.co/XsutpVJirw\",\"Favorite\":36856},{\"tweetId\":\"1970196400253100206\",\"text\":\"\ud83d\ude0e \\n\\n#ballondor https://t.co/THtPfXfO0R\",\"Favorite\":36800}]",
+                "top_posts_retweet": "[{\"tweetId\":\"1970228698071867504\",\"text\":\"OUSMANE DEMB\u00c9L\u00c9 IS THE 2025 MEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/xLSvNVEh51\",\"Retweet\":24656},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Retweet\":22344},{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Retweet\":18052},{\"tweetId\":\"1970228803289948390\",\"text\":\"\ud83d\udea8\ud83d\udea8\ud83d\udca3 OFFICIEL ! \ud835\udde2\ud835\udde8\ud835\udde6\ud835\udde0\ud835\uddd4\ud835\udde1\ud835\uddd8 \ud835\uddd7\ud835\uddd8\ud835\udde0\ud835\uddd5\ud835\uddd8\u0301\ud835\udddf\ud835\uddd8\u0301 \ud83c\uddeb\ud83c\uddf7 \ud835\uddd8\ud835\udde6\ud835\udde7 \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7\u2019\ud835\udde2\ud835\udde5 \ud835\udfee\ud835\udfec\ud835\udfee\ud835\udff1 \ud83c\udf15 !!!!! \ud83e\udd29 #BallonDor \\n\\nLE 6\u00c8ME JOUEUR FRAN\u00c7AIS \u00c0 REMPORTER LE TROPH\u00c9E ULTIME.\\n\\nSA SAISON EST\u2026 \ud835\uddeb\ud835\uddeb\ud835\udddf :\\n\\n\ud83c\udfdf\ufe0f 60 matches\\n\u26bd\ufe0f 34 buts\\n\ud83c\udfaf 14 passes d\u00e9cisives \\n\\n\ud83c\udf1f Ligue des Champions\\n\ud83c\udfc6\u2026 https://t.co/yYB3mjFfwB\",\"Retweet\":8611},{\"tweetId\":\"1970229073709301886\",\"text\":\"\ud835\udc76\ud835\udc96\ud835\udc94\ud835\udc8e\ud835\udc82\ud835\udc8f\ud835\udc86 \ud835\udc69\ud835\udc82\ud835\udc8d\ud835\udc8d\ud835\udc90\ud835\udc8f \ud835\udc85\u2019\ud835\udc76\ud835\udc93 \ud83c\udfc6\u2728\\n\\n\u00c0 jamais dans l\u2019Histoire \ud83c\uddeb\ud83c\uddf7\\n\\n#FiersdetreBleus #ballondor https://t.co/XsutpVJirw\",\"Retweet\":6563}]",
+                "top_posts_quote": "[{\"tweetId\":\"1970228698071867504\",\"text\":\"OUSMANE DEMB\u00c9L\u00c9 IS THE 2025 MEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/xLSvNVEh51\",\"Quote\":1616},{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Quote\":1606},{\"tweetId\":\"1970176286695006326\",\"text\":\"\ud83d\udea8 OFFICIEL ! \ud835\udde3\ud835\uddd8\ud835\uddd7\ud835\udde5\ud835\udddc \ud83c\uddea\ud83c\uddf8 \ud835\udde7\ud835\uddd8\ud835\udde5\ud835\udde0\ud835\udddc\ud835\udde1\ud835\uddd8 \ud835\uddd4\u0300 \ud835\udddf\ud835\uddd4 1\ufe0f\u20e31\ufe0f\u20e3\ud835\uddf2\u0300\ud835\uddfa\ud835\uddf2 \ud835\udde3\ud835\udddf\ud835\uddd4\ud835\uddd6\ud835\uddd8 \ud835\uddd7\ud835\udde8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7\u2019\ud835\udde2\ud835\udde5 \ud835\udfee\ud835\udfec\ud835\udfee\ud835\udff1 ! \ud83c\udf15 #BallonDor\\n\\nS\u00dbREMENT LA PLUS GRANDE SAISON DE SA CARRI\u00c8RE !!!\\n\\n\ud83c\udfdf\ufe0f 69 matches TCC\\n\u26bd\ufe0f 7 buts\\n\ud83c\udfaf 11 passes d\u00e9cisives\\n\\n\ud83c\udfc6 La Liga\\n\ud83c\udfc6 Coupe du Roi\\n\ud83c\udfc6 Supercoupe d'Espagne https://t.co/kzMbr8C1F2\",\"Quote\":990},{\"tweetId\":\"1970152530727272675\",\"text\":\"\ud83d\udea8 OFFICIEL ! \ud835\udde0\ud835\udddc\ud835\uddd6\ud835\udddb\ud835\uddd4\ud835\uddd8\ud835\udddf \ud835\udde2\ud835\udddf\ud835\udddc\ud835\udde6\ud835\uddd8 \ud83c\uddeb\ud83c\uddf7 \ud835\udde7\ud835\uddd8\ud835\udde5\ud835\udde0\ud835\udddc\ud835\udde1\ud835\uddd8 \ud835\uddd4\u0300 \ud835\udddf\ud835\uddd4 3\ufe0f\u20e30\ufe0f\u20e3\ud835\uddf2\u0300\ud835\uddfa\ud835\uddf2 \ud835\udde3\ud835\udddf\ud835\uddd4\ud835\uddd6\ud835\uddd8 \ud835\uddd7\ud835\udde8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7\u2019\ud835\udde2\ud835\udde5 \ud835\udfee\ud835\udfec\ud835\udfee\ud835\udff1 ! \ud83c\udf15 #BallonDor \\n\\nSON PREMIER CLASSEMENT DE SA CARRI\u00c8RE !!!\\n\\nSur la saison 2024/2025 c\u2019est :\\n\\n\ud83c\udfdf\ufe0f 64 matches TCC\\n\u26bd\ufe0f 22 buts\\n\ud83c\udfaf 22 passes d\u00e9cisives\\n\\n\ud83c\udfc6\u2026 https://t.co/7vGi13GD7f\",\"Quote\":673},{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Quote\":672}]",
+                "verticals": "Football (soccer),News,Politics,Sports News,Crypto",
+                "top_hashtags": "BallonDor,ballondor,OMPSG,BallonDor2025,TeamOM,BALLONDOR,UCL,BallondOr,Ligue1McDonalds,PSG",
+                "top_mentions": "ballondor,lequipe,PSG_inside,FCBarcelona,SEFutbol,equipedefrance,Pedri,marca,dembouz,mundodeportivo",
+                "entity_names": "Soccer,Sports events,Ballon d'Or,Paris 2024 Summer Olympics,Olympics,Paris Saint-Germain,Men's national soccer teams,Ligue 1,Lamine Yamal,Popular Images",
+                "top_creators": "ActuFoot_,ballondor,lequipe,PSG_inside,lnstantFoot,_BeFootball,MercatoPlein,ChampionsLeague,87_JoaoNeves,dembouz",
+                "ai_summary": "The 'Event' category achieved the highest impressions at 287,880,485 from 343,703 posts, with exceptional engagement metrics like 3,283,936 favorites and 426,017 retweets, reflecting significant audience interest in major events like the Ballon d'Or. Content revolves around the #BallonDor hashtag and mentions of key accounts like @ballondor, with a male-dominated audience (83.01%) aged 25-34 (38.86%) interested in football and sports news. The top post about Ousmane Demb\u00e9l\u00e9\u2019s Ballon d'Or win (3.6M impressions) and high video viewership (38,388,526) suggest a focus on event-specific, visually engaging content as a key growth strategy."
+        },
+        {
+                "name": "iPhone 17",
+                "impressions": 46517729,
+                "posts": 250609,
+                "reply": 25480,
+                "favorite": 320089,
+                "retweet": 28527,
+                "video_views": 7156665,
+                "no_of_authors": 111613,
+                "engagement": 374096,
+                        "age_data": [
+                                    {
+                                                "label": "18-24",
+                                "value": 34.37
+                                    },
+                                    {
+                                                "label": "25-34",
+                                "value": 42.29
+                                    },
+                                    {
+                                                "label": "35-44",
+                                "value": 14.02
+                                    },
+                                    {
+                                                "label": "45-54",
+                                "value": 4.85
+                                    },
+                                    {
+                                                "label": "55-64",
+                                "value": 2.06
+                                    },
+                                    {
+                                                "label": "Over65",
+                                "value": 2.41
+                                    }
+                        ],
+                        "gender_data": [
+                                    {
+                                                "label": "FEMALE",
+                                "value": 10.32
+                                    },
+                                    {
+                                                "label": "MALE",
+                                "value": 89.68
+                        }
+                ],
+                "top_photos": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Impressions\":3603199,\"photo_url\":\"http://pbs.twimg.com/media/G1eomulWYAAzuG1.jpg\"},{\"tweetId\":\"1969820468736614656\",\"text\":\"C'est ainsi que Lionel Messi a quitt\u00e9 l'Europe.\ud83d\ude2e\u200d\ud83d\udca8\ud83c\udf15\\n\\n\ud83d\udc10 \ud83e\udd76 https://t.co/avsfzA4Yi3\",\"Impressions\":2880426,\"photo_url\":\"http://pbs.twimg.com/media/G1Y1RLKWQAAcYI3.jpg\"},{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Impressions\":2688111,\"photo_url\":\"http://pbs.twimg.com/media/G1douL0XwAAWjH-.jpg\"},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Impressions\":2578964,\"photo_url\":\"http://pbs.twimg.com/media/G1fYqwMXEAAJKxG.jpg\"},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Impressions\":2578964,\"photo_url\":\"http://pbs.twimg.com/media/G1fYqwSWoAAnUOa.jpg\"}]",
+                "top_gifs": "[{\"tweetId\":\"1970200540236915076\",\"text\":\"dembele qui ouvre flash resultat https://t.co/leOoi7D29b\",\"Impressions\":221916,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eO8gAXUAAlzJz.jpg\"},{\"tweetId\":\"1970235626126721272\",\"text\":\"J\u2019ai vu la France gagner la Coupe du Monde, le PSG gagner la LDC et Dembele gagner le Ballon d\u2019Or merci pour tout le football tu peux plus rien faire pour moi tu m\u2019a d\u00e9j\u00e0 tout donn\u00e9 \u2764\ufe0f https://t.co/eXDQ2tWk3g\",\"Impressions\":149471,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eu2u3WQAAtJnd.jpg\"},{\"tweetId\":\"1969774427052408887\",\"text\":\"j\u2019viens de penser a un truc,\\n\\nles joueurs du PSG qui c\u00e9l\u00e8bre le ballon d\u2019or sur le terrain, avec Dembele en facetime https://t.co/y2zbqOPjQt\",\"Impressions\":139883,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1YLZcxXsAABzX-.jpg\"},{\"tweetId\":\"1970231890532782480\",\"text\":\"Dembele qui fait pleurer sa maman de joie et de fiert\u00e9 pendant que la mienne habite toujours \u00e0 Grigny\u2026 pardon MAMAN https://t.co/WcyOCW1OmB\",\"Impressions\":119267,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1erdVkXkAAsL7j.jpg\"},{\"tweetId\":\"1969764763208155426\",\"text\":\"@elhajalisherine Le psg est inform\u00e9 que Dembele aura pas ils veulent faire comme le real mais d\u2019une autre fa\u00e7on https://t.co/5CyhbIGYHd\",\"Impressions\":77967,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1YCnDRXwAA-eJ6.jpg\"}]",
+                "top_videos": "[{\"tweetId\":\"1970082568616939558\",\"text\":\"\ud83d\udea8 La r\u00e9action de Neymar qui se fait VOLER le Ballon d\u2019Or 2017 par Messi \ud83e\udd2f\\n\\nC\u2019est horrible \ud83d\udc94\ud83d\udc94 https://t.co/lVXjVQwGZ0\",\"Impressions\":1497923,\"video_url\":\"https://video.twimg.com/amplify_video/1970082514548011008/vid/avc1/576x576/IktDwnF8WoPFVy-Z.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970082514548011008/img/-qpxdxdo1LtF8k2z.jpg\",\"video_views\":807182},{\"tweetId\":\"1970263238475645086\",\"text\":\"\ud83d\udea8\ud83d\udea8 MOUNIR NASRAOUI, P\u00c8RE DE LAMINE YAMAL \ud83c\uddea\ud83c\uddf8 :\\n\\n\u00ab Quelque chose de tr\u00e8s \u00e9trange s'est produit\u2026 \ud835\uddd6\u2019\ud835\uddd8\ud835\udde6\ud835\udde7 \ud835\udde3\ud835\udddf\ud835\udde8\ud835\udde6 \ud835\uddda\ud835\udde5\ud835\uddd4\ud835\udde1\ud835\uddd7 \ud835\uddd7\ud835\udde2\ud835\udde0\ud835\udde0\ud835\uddd4\ud835\uddda\ud835\uddd8 \ud835\udde0\ud835\udde2\ud835\udde5\ud835\uddd4\ud835\udddf \ud835\uddd6\ud835\uddd4\ud835\udde8\ud835\udde6\ud835\uddd8\u0301 \ud835\uddd4\u0300 \ud835\udde8\ud835\udde1 \ud835\uddd8\u0302\ud835\udde7\ud835\udde5\ud835\uddd8 \ud835\udddb\ud835\udde8\ud835\udde0\ud835\uddd4\ud835\udddc\ud835\udde1. \ud83d\ude24\\n\\nLamine est de loin le meilleur de tous. \u00bb #BallonDor \\n\\nhttps://t.co/uzo74uxXGB\",\"Impressions\":1320197,\"video_url\":\"https://video.twimg.com/amplify_video/1970261177058906113/vid/avc1/2560x1440/g6MWMcu7N1PuZuqz.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970261177058906113/img/uW38E_5t2o1j5HpU.jpg\",\"video_views\":735282},{\"tweetId\":\"1970194884360368281\",\"text\":\"Lamine Yamal \ud83c\uddea\ud83c\uddf8 a ramen\u00e9 toute la famille. \ud83d\ude01\ud83e\udd70 #BallonDor \\n\\nhttps://t.co/dA5wkadm4K\",\"Impressions\":1883214,\"video_url\":\"https://video.twimg.com/amplify_video/1970194372688859136/vid/avc1/1920x1080/0IA-DLJwt0RQYiNk.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970194372688859136/img/U-KntT65jUbGfdfp.jpg\",\"video_views\":634847},{\"tweetId\":\"1970199450388754885\",\"text\":\"\ud83d\udea8\ud83d\udd19 Les derniers mots de Cristiano Ronaldo lors de cette c\u00e9r\u00e9monie du Ballon d'Or\\n\\n\u00ab Je serai l\u00e0 dans 2 ou 3 ans, donc pour ceux qui ne m'aiment pas, ils me verront ici \u00bb\\n\\nMais attendez ! Pourquoi Messi riait-il ? \ud83d\ude02\ud83d\ude02\ud83d\ude02 Je jure que Messi trollait discr\u00e8tement.\ud83d\ude2d\ud83d\ude2d https://t.co/z6zeoCBNo5\",\"Impressions\":974570,\"video_url\":\"https://video.twimg.com/amplify_video/1970199359200366592/vid/avc1/1280x720/yXAaLH2w0wAldfWL.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970199359200366592/img/DmG858OfXHcqsAE2.jpg\",\"video_views\":625389},{\"tweetId\":\"1970212912980758925\",\"text\":\"Tiakola est arriv\u00e9 \u00e0 la c\u00e9r\u00e9monie du Ballon d'or ce soir accompagn\u00e9 par ses neveux pour soutenir Ousmane Dembele !\\n\\n#ballondor https://t.co/8VPDBPgej7\",\"Impressions\":1606123,\"video_url\":\"https://video.twimg.com/ext_tw_video/1970212877236609025/pu/vid/avc1/1280x720/oe8fzkXcp_LUTBuJ.mp4?tag=12\",\"photo_url\":\"http://pbs.twimg.com/ext_tw_video_thumb/1970212877236609025/pu/img/vewlh4cUuQEdw6me.jpg\",\"video_views\":512494}]",
+                "top_posts": "[{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Impressions\":3603199},{\"tweetId\":\"1969820468736614656\",\"text\":\"C'est ainsi que Lionel Messi a quitt\u00e9 l'Europe.\ud83d\ude2e\u200d\ud83d\udca8\ud83c\udf15\\n\\n\ud83d\udc10 \ud83e\udd76 https://t.co/avsfzA4Yi3\",\"Impressions\":2880426},{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Impressions\":2688111},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Impressions\":2578964},{\"tweetId\":\"1970179915233538391\",\"text\":\"\ud83d\udea8 \ud835\udc0e\ud835\udc05\ud835\udc05\ud835\udc08\ud835\udc02\ud835\udc08\ud835\udc00\ud835\udc0b: Ballon d\u2019Or \ud835\udc2d\ud835\udc28\ud835\udc29 \ud835\udfcf\ud835\udfce ready as positions from 11th to 30th are confirmed! \ud83c\udf15\\n\\n\ud83c\uddeb\ud83c\uddf7 Ousmane Demb\u00e9l\u00e9\\n\ud83c\uddea\ud83c\uddf8 Lamine Yamal\\n\ud83c\udde7\ud83c\uddf7 Raphinha\\n\ud83c\uddf5\ud83c\uddf9 Vitinha\\n\ud83c\uddf2\ud83c\udde6 Achraf Hakimi\\n\ud83c\udff4\udb40\udc67\udb40\udc62\udb40\udc65\udb40\udc6e\udb40\udc67\udb40\udc7f Cole Palmer\\n\ud83c\uddeb\ud83c\uddf7 Kylian Mbapp\u00e9\\n\ud83c\uddf5\ud83c\uddf9 Nuno Mendes\\n\ud83c\uddea\ud83c\uddec Mo Salah\\n\ud83c\uddee\ud83c\uddf9 Gianluigi Donnarumma\\n\\nAgree or disagree? https://t.co/NLNeHX1xsP\",\"Impressions\":2421029}]",
+                "top_posts_reply": "[{\"tweetId\":\"1970137305265611076\",\"text\":\"Si Ousmane Dembele ne prend pas le ballon d\u2019or, je donne 20\u20ac \u00e0 tout ceux qui like et r\u00e9pondent \u00e0 ce tweet ( faut me follow ) https://t.co/d0fsSoLwPc\",\"Reply\":1602},{\"tweetId\":\"1970410315910390019\",\"text\":\"\ud83d\udc40 Et si tu repartais avec un maillot de l'@equipedefrance \ud835\udc03\ud835\udc04\u0301\ud835\udc03\ud835\udc08\ud835\udc02\ud835\udc00\ud835\udc02\ud835\udc04\u0301 par le #ballondor 2025 @dembouz ? \ud83c\uddeb\ud83c\uddf7\u200b\\n\\n\ud83d\udc49 Pour tenter ta chance : \u200b\\n1\ufe0f\u20e3 Follow @TeamOrangeFoot\u200b et @Orange_France \\n2\ufe0f\u20e3 Commente \\\"Ousmane Ballon d'Or\\\"\u200b\\n\u200b\\n#jeuconcours https://t.co/Fqgq3BnifF\",\"Reply\":817},{\"tweetId\":\"1969751667294843227\",\"text\":\"Le Classique @OM_Officiel - @PSG_inside report\u00e9 au lundi 22 septembre \u00e0 20h00.\\n\\nEn raison des fortes intemp\u00e9ries pr\u00e9vues sur la r\u00e9gion marseillaise, la rencontre Olympique de Marseille-Paris Saint-Germain, comptant pour la 5e journ\u00e9e de @Ligue1  et pr\u00e9vue ce soir, a \u00e9t\u00e9 report\u00e9e\u2026\",\"Reply\":789},{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Reply\":710},{\"tweetId\":\"1970462160536174933\",\"text\":\"Celebrating Demb\u00e9l\u00e9\u2019s Ballon d\u2019Or with a special jersey giveaway \ud83d\ude0d\\n\\nLike and RT the post\\nFollow @Ligue1_ENG\\nReply \u2018DEMBELE\u2019 https://t.co/jjgIxbC6QL\",\"Reply\":709}]",
+                "top_posts_favorite": "[{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Favorite\":110764},{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Favorite\":59766},{\"tweetId\":\"1970230199859191890\",\"text\":\"Congratulations. @dembouz \ud83d\udc99 https://t.co/Z08Vt4FnRF\",\"Favorite\":34481},{\"tweetId\":\"1970229698522452428\",\"text\":\"- Roni c\u2019est \u00e0 vous d\u2019annoncer le vainqueur du\\n- Dembele\",\"Favorite\":34266},{\"tweetId\":\"1970235955631038630\",\"text\":\"Ronaldinho lui aussi mdr Z\u00c9RO suspens , il a direct dit \u00ab\u00a0DEMBELE\u00a0\u00bb \\n\\nL\u2019ancien voulait vite rejoindre ses babies \u00e0 Vitry sur Seine\",\"Favorite\":32893}]",
+                "top_posts_retweet": "[{\"tweetId\":\"1970281604770865527\",\"text\":\"Beaucoup de joie, de fiert\u00e9 et d\u2019\u00e9motion. Un r\u00eave devenu r\u00e9alit\u00e9. Merci \u00e0 tous ceux qui m\u2019ont toujours soutenu tout au long de ce parcours. #ballondor https://t.co/dLTgZXqa6d\",\"Retweet\":22344},{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Retweet\":18052},{\"tweetId\":\"1970235955631038630\",\"text\":\"Ronaldinho lui aussi mdr Z\u00c9RO suspens , il a direct dit \u00ab\u00a0DEMBELE\u00a0\u00bb \\n\\nL\u2019ancien voulait vite rejoindre ses babies \u00e0 Vitry sur Seine\",\"Retweet\":4261},{\"tweetId\":\"1970218907790385549\",\"text\":\"Quelle saison historique... \ud83d\udcda\ud83c\udfc6\\nLe Paris Saint-Germain, club masculin de l'ann\u00e9e ! \ud83e\udd29\ud83d\udc4f\\n\\n#ballondor https://t.co/4Xq3lfi9SU\",\"Retweet\":3619},{\"tweetId\":\"1970208728583385436\",\"text\":\"Notre entra\u00eeneur Luis Enrique, remporte le Troph\u00e9e Cruyff \ud83e\udde0\ud83d\udc4f\\n\\n#ballondor https://t.co/WRAbBw01Jq\",\"Retweet\":3106}]",
+                "top_posts_quote": "[{\"tweetId\":\"1970176290654126118\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/JC09v7TzQf\",\"Quote\":1606},{\"tweetId\":\"1970228782876491991\",\"text\":\"Mesdames et Messieurs, Ousmane Demb\u00e9l\u00e9 est votre Ballon d\u2019Or 2025 \ud83d\udcab\ud83c\udfc6\\n\\n#ballondor https://t.co/oBhd5uehkf\",\"Quote\":672},{\"tweetId\":\"1970176396954869796\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! \ud835\udddc\ud835\udddf\ud835\udde6 \ud835\udde6\ud835\udde2\ud835\udde1\ud835\udde7 \ud835\uddd7\ud835\uddd4\ud835\udde1\ud835\udde6 \ud835\udddf\ud835\uddd8 \ud835\udde7\ud835\udde2\ud835\udde3 \ud835\udfed\ud835\udfec \ud835\uddd7\ud835\udde8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7\u2019\ud835\udde2\ud835\udde5 \ud835\udfee\ud835\udfec\ud835\udfee\ud835\udff1 \ud83c\udf15 !!! #BallonDor \\n\\n\ud83c\uddeb\ud83c\uddf7 DEMB\u00c9L\u00c9\\n\ud83c\uddeb\ud83c\uddf7 MBAPP\u00c9\\n\ud83c\udff4\udb40\udc67\udb40\udc62\udb40\udc65\udb40\udc6e\udb40\udc67\udb40\udc7f PALMER\\n\ud83c\uddea\ud83c\uddf8 YAMAL\\n\ud83c\uddf5\ud83c\uddf9 VITINHA\\n\ud83c\uddf5\ud83c\uddf9 NUNO MENDES\\n\ud83c\uddee\ud83c\uddf9 DONNARUMMA\\n\ud83c\uddf2\ud83c\udde6 HAKIMI\\n\ud83c\uddea\ud83c\uddec SALAH\\n\ud83c\udde7\ud83c\uddf7 RAPHINHA\",\"Quote\":670},{\"tweetId\":\"1969751667294843227\",\"text\":\"Le Classique @OM_Officiel - @PSG_inside report\u00e9 au lundi 22 septembre \u00e0 20h00.\\n\\nEn raison des fortes intemp\u00e9ries pr\u00e9vues sur la r\u00e9gion marseillaise, la rencontre Olympique de Marseille-Paris Saint-Germain, comptant pour la 5e journ\u00e9e de @Ligue1  et pr\u00e9vue ce soir, a \u00e9t\u00e9 report\u00e9e\u2026\",\"Quote\":628},{\"tweetId\":\"1970176573190881421\",\"text\":\"Ranked at the 11st place for the 2025 Men's Ballon d'Or! \\n\\n@Pedri\\n@FCBarcelona\\n@SEFutbol\\n\\n#ballondor https://t.co/fyYFxN72CQ\",\"Quote\":575}]",
+                "verticals": "Football (soccer),News,Politics,Sports News,Crypto",
+                "top_hashtags": "BallonDor,ballondor,OMPSG,BallonDor2025,BallondOr,LeClassique,Ballondor,Troph\u00e9eKopa,Troph\u00e9eYachine,Yamal",
+                "top_mentions": "PSG_inside,dembouz,FCBarcelona,SEFutbol,ballondor,Ligue1,Pedri,mundodeportivo,ActuFoot_,OM_Officiel",
+                "entity_names": "Soccer,Sports events,Ballon d'Or,Lamine Yamal,Raphinha ,La Liga,Kylian Mbappe,Spain - Soccer,NFL,Super Bowl LIX: Chiefs at Eagles",
+                "top_creators": "PSG_inside,ballondor,ActuFoot_,_BeFootball,lnstantFoot,Kenpachi1070,IntermiamiFR_,FabrizioRomano,FCBarcelona,BarcaNewsFRA",
+                "ai_summary": "The 'Players' category leads in post volume with 609,901 posts, generating 243,607,344 impressions and strong engagement, including 3,574,553 favorites and 27,219,324 video views, highlighting a focus on individual player narratives. Content centers on stars like Ousmane Demb\u00e9l\u00e9 and Lionel Messi, with hashtags like #BallonDor and mentions of @PSG_inside dominating, while the audience is largely male (89.68%) and aged 25-34 (42.29%), with interests in football and news. High-performing posts (e.g., Demb\u00e9l\u00e9\u2019s Ballon d'Or announcement at 3.6M impressions) and emotional video content suggest an opportunity to deepen fan connection through player-centric storytelling."
+        },
+        {
+                "name": "Sponsors/Partners",
+                "impressions": 15208518,
+                "posts": 27343,
+                "reply": 3059,
+                "favorite": 192661,
+                "retweet": 26066,
+                "video_views": 674817,
+                "no_of_authors": 7352,
+                "engagement": 221786,
+                        "age_data": [
+                                    {
+                                                "label": "18-24",
+                                "value": 22.98
+                                    },
+                                    {
+                                                "label": "25-34",
+                                "value": 38.68
+                                    },
+                                    {
+                                                "label": "35-44",
+                                "value": 21.29
+                                    },
+                                    {
+                                                "label": "45-54",
+                                "value": 8.82
+                                    },
+                                    {
+                                                "label": "55-64",
+                                "value": 3.82
+                                    },
+                                    {
+                                                "label": "Over65",
+                                "value": 4.41
+                                    }
+                        ],
+                        "gender_data": [
+                                    {
+                                                "label": "FEMALE",
+                                "value": 19.45
+                                    },
+                                    {
+                                                "label": "MALE",
+                                "value": 80.55
+                        }
+                ],
+                "top_photos": "[{\"tweetId\":\"1970228962300178465\",\"text\":\"bonne nuit. https://t.co/o38XorQk3X\",\"Impressions\":3960162,\"photo_url\":\"http://pbs.twimg.com/media/G1eoxNxWYAA5Qcs.jpg\"},{\"tweetId\":\"1970271854293377049\",\"text\":\"OHHHH ADIDAS QUI R\u00c9GALE AVEC UNE COLLECTION SP\u00c9CIALE OUSMANE DEMBELE ! \ud83d\ude2d\ud83d\udc9b\ud83c\udf15 #BallonDor \\n\\nLa paire de F50 est splendide !! https://t.co/tCG6D9nUhz\",\"Impressions\":1469587,\"photo_url\":\"http://pbs.twimg.com/media/G1fPzkhX0AA-MEh.jpg\"},{\"tweetId\":\"1970271854293377049\",\"text\":\"OHHHH ADIDAS QUI R\u00c9GALE AVEC UNE COLLECTION SP\u00c9CIALE OUSMANE DEMBELE ! \ud83d\ude2d\ud83d\udc9b\ud83c\udf15 #BallonDor \\n\\nLa paire de F50 est splendide !! https://t.co/tCG6D9nUhz\",\"Impressions\":1469587,\"photo_url\":\"http://pbs.twimg.com/media/G1fPzktXIAAr_zL.jpg\"},{\"tweetId\":\"1970239643171029350\",\"text\":\"\ud83e\udd79\\n\\n#UCL || #ballondor https://t.co/IVCf6YuxWZ\",\"Impressions\":386273,\"photo_url\":\"http://pbs.twimg.com/media/G1eyUUhWYAAcCdu.jpg\"},{\"tweetId\":\"1970229038498398470\",\"text\":\"Ousmane Demb\u00e9l\u00e9, Ballon d'Or winner 2025 \ud83c\udfc6\\n\\n#UCL || #ballondor https://t.co/jvB7vhqqJr\",\"Impressions\":289824,\"photo_url\":\"http://pbs.twimg.com/media/G1eouBVXEAA9ol2.jpg\"}]",
+                "top_gifs": "[{\"tweetId\":\"1970235924110770604\",\"text\":\"Adidas et Nike quand il faut mettre leur sportif en valeur https://t.co/T5M1Vn4HxO\",\"Impressions\":66734,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1evIKOXAAAChWN.jpg\"},{\"tweetId\":\"1970079557072933253\",\"text\":\"AD: Pas mal de nouvelles sorties sur Nike\\n\\nComme d'hab je fais une s\u00e9lection \ud83d\udd14\\n\\nLien =&gt; https://t.co/6lE7piA5Wi https://t.co/zUXITAGONg\",\"Impressions\":30377,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1cg6ZCXsAA-1CJ.jpg\"},{\"tweetId\":\"1970241756718383268\",\"text\":\"@adidasFR Adidas en communication, maillot et v\u00eatements depuis quelques temps faut juste applaudir https://t.co/Jxr06AaSKi\",\"Impressions\":16110,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1e0bp-W4AAr1NX.jpg\"},{\"tweetId\":\"1970503189217628360\",\"text\":\"@FutPoliceLeaks Maintenant, un petit joueur dans la nouvelle promo Vendredi stp @EASPORTSFC https://t.co/pWd5BIgXMQ\",\"Impressions\":10904,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1iiM_rW4AA-JHv.jpg\"},{\"tweetId\":\"1970237127850963306\",\"text\":\"@adidasfootball Le gars qui a eu l\u2019id\u00e9e https://t.co/gm7iSGYjkh\",\"Impressions\":6766,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1ewN7JXMAAQ-cc.jpg\"}]",
+                "top_videos": "[{\"tweetId\":\"1970110835382247526\",\"text\":\"Introducing NikeSKIMS. \\n\\nArrives 9.26 at 7AM PT at https://t.co/AvZKZiEM51, https://t.co/8MYenSS4Gi, and select Nike and SKIMS retail locations. https://t.co/Qq8SiOsvzQ\",\"Impressions\":276768,\"video_url\":\"https://video-s.twimg.com/amplify_video/1970110648408592384/vid/avc1/1080x1920/rvT7rNvwIgNPUZAA.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970110648408592384/img/8FPScnYSIqMySZUt.jpg\",\"video_views\":77015},{\"tweetId\":\"1970067652942147656\",\"text\":\"The emotions await us tonight. \\n\\nThe 69th Ballon d\u2019Or Ceremony, presented by @qatarairways. \\n\\n#ballondor https://t.co/OBeCawhAoN\",\"Impressions\":148792,\"video_url\":\"https://video.twimg.com/amplify_video/1970066482869547008/vid/avc1/1080x1920/OWn-er7Rp-W5Qi7f.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970066482869547008/img/8-VvPgofhSH8VnNE.jpg\",\"video_views\":76221},{\"tweetId\":\"1970251559788286004\",\"text\":\"Mother and son \u2764\ufe0f\\n\\n#UCL || #ballondor https://t.co/D13Ez3CWQp\",\"Impressions\":63816,\"video_url\":\"https://video.twimg.com/amplify_video/1970251456901967872/vid/avc1/1080x1920/NqgWXyAkcsk-vm9E.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970251456901967872/img/zaFn-0diYxwg9VeS.jpg\",\"video_views\":43533},{\"tweetId\":\"1970234816101748854\",\"text\":\"A dream realised for Demb\u00e9l\u00e9 \ud83e\udd79\\n\\n#UCL || #ballondor https://t.co/LTKLo5N5Hg\",\"Impressions\":108484,\"video_url\":\"https://video.twimg.com/amplify_video/1970234085365764096/vid/avc1/1080x1920/Lpup72GjdYTkOvq4.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970234085365764096/img/R8k34an03EM5ywPl.jpg\",\"video_views\":38081},{\"tweetId\":\"1969721637252538773\",\"text\":\"Nuestra casa, m\u00e1s cerca. SPOTIFY CAMP NOU \ud83d\udc99\u2764\ufe0f https://t.co/nHdRmqQ7zr\",\"Impressions\":158427,\"video_url\":\"https://video.twimg.com/amplify_video/1969721329097043968/vid/avc1/1920x1080/KXHyiRRYCBQJLkSA.mp4?tag=16\",\"photo_url\":\"http://pbs.twimg.com/media/G1XbWKjXwAAnJKb.jpg\",\"video_views\":27714}]",
+                "top_posts": "[{\"tweetId\":\"1970228962300178465\",\"text\":\"bonne nuit. https://t.co/o38XorQk3X\",\"Impressions\":3960162},{\"tweetId\":\"1970271854293377049\",\"text\":\"OHHHH ADIDAS QUI R\u00c9GALE AVEC UNE COLLECTION SP\u00c9CIALE OUSMANE DEMBELE ! \ud83d\ude2d\ud83d\udc9b\ud83c\udf15 #BallonDor \\n\\nLa paire de F50 est splendide !! https://t.co/tCG6D9nUhz\",\"Impressions\":1469587},{\"tweetId\":\"1970062390952686011\",\"text\":\"Il y a cinq jours, Qatar Airways annon\u00e7ait \u00eatre sponsor de la c\u00e9r\u00e9monie du Ballon d'Or et pas n'importe comment : la compagnie qatarie devenait la premi\u00e8re de l'histoire \u00e0 \u00eatre \\\"presenting partner\\\" de l'\u00e9v\u00e9n\u00e9ment\\n\\nEn gros, cela signifie un gros ch\u00e8que en contrepartie et une\u2026\",\"Impressions\":576314},{\"tweetId\":\"1969705805151863215\",\"text\":\"J\u2019arr\u00eaterai de porter du Carhartt ou du Adidas quand les gens de droite n\u2019utiliseront plus leur carte vitale et ne prendront plus aucun cong\u00e9 pay\u00e9 \ud83e\udd17\",\"Impressions\":481894},{\"tweetId\":\"1970239643171029350\",\"text\":\"\ud83e\udd79\\n\\n#UCL || #ballondor https://t.co/IVCf6YuxWZ\",\"Impressions\":386273}]",
+                "top_posts_reply": "[{\"tweetId\":\"1969705805151863215\",\"text\":\"J\u2019arr\u00eaterai de porter du Carhartt ou du Adidas quand les gens de droite n\u2019utiliseront plus leur carte vitale et ne prendront plus aucun cong\u00e9 pay\u00e9 \ud83e\udd17\",\"Reply\":576},{\"tweetId\":\"1970045016874819916\",\"text\":\"\ud83e\udd47 Who should win the Ballon d'Or?\\n\\n#UCL || @ballondor https://t.co/C6WM0p632M\",\"Reply\":106},{\"tweetId\":\"1970062390952686011\",\"text\":\"Il y a cinq jours, Qatar Airways annon\u00e7ait \u00eatre sponsor de la c\u00e9r\u00e9monie du Ballon d'Or et pas n'importe comment : la compagnie qatarie devenait la premi\u00e8re de l'histoire \u00e0 \u00eatre \\\"presenting partner\\\" de l'\u00e9v\u00e9n\u00e9ment\\n\\nEn gros, cela signifie un gros ch\u00e8que en contrepartie et une\u2026\",\"Reply\":98},{\"tweetId\":\"1970231030998065192\",\"text\":\"Je viens de mettre K.O deux agents de la s\u00e9cu en partant.\\n\\nLamine Yamal est le v\u00e9ritable BO.\\nMais comme Qatar Airways ne pouvait pas l\u2019accepter. Ils ont sponsoris\u00e9 au dernier moment la c\u00e9r\u00e9monie avec des dons tr\u00e8s g\u00e9n\u00e9reux.\\nEt en remerciement les corrompus organisateurs de ce\u2026\",\"Reply\":67},{\"tweetId\":\"1970228962300178465\",\"text\":\"bonne nuit. https://t.co/o38XorQk3X\",\"Reply\":62}]",
+                "top_posts_favorite": "[{\"tweetId\":\"1970228962300178465\",\"text\":\"bonne nuit. https://t.co/o38XorQk3X\",\"Favorite\":47681},{\"tweetId\":\"1970239643171029350\",\"text\":\"\ud83e\udd79\\n\\n#UCL || #ballondor https://t.co/IVCf6YuxWZ\",\"Favorite\":12085},{\"tweetId\":\"1970229038498398470\",\"text\":\"Ousmane Demb\u00e9l\u00e9, Ballon d'Or winner 2025 \ud83c\udfc6\\n\\n#UCL || #ballondor https://t.co/jvB7vhqqJr\",\"Favorite\":10118},{\"tweetId\":\"1970207558636843157\",\"text\":\"\ud83e\udd76\\n\\n#UCL || #ballondor https://t.co/Lm2Ap59zem\",\"Favorite\":9582},{\"tweetId\":\"1970222719498428889\",\"text\":\"Le Xenomorphe en Adidas je pleure.\",\"Favorite\":9276}]",
+                "top_posts_retweet": "[{\"tweetId\":\"1970228962300178465\",\"text\":\"bonne nuit. https://t.co/o38XorQk3X\",\"Retweet\":13332},{\"tweetId\":\"1970229038498398470\",\"text\":\"Ousmane Demb\u00e9l\u00e9, Ballon d'Or winner 2025 \ud83c\udfc6\\n\\n#UCL || #ballondor https://t.co/jvB7vhqqJr\",\"Retweet\":1643},{\"tweetId\":\"1970239643171029350\",\"text\":\"\ud83e\udd79\\n\\n#UCL || #ballondor https://t.co/IVCf6YuxWZ\",\"Retweet\":1627},{\"tweetId\":\"1970207558636843157\",\"text\":\"\ud83e\udd76\\n\\n#UCL || #ballondor https://t.co/Lm2Ap59zem\",\"Retweet\":963},{\"tweetId\":\"1969705805151863215\",\"text\":\"J\u2019arr\u00eaterai de porter du Carhartt ou du Adidas quand les gens de droite n\u2019utiliseront plus leur carte vitale et ne prendront plus aucun cong\u00e9 pay\u00e9 \ud83e\udd17\",\"Retweet\":499}]",
+                "top_posts_quote": "[{\"tweetId\":\"1970228962300178465\",\"text\":\"bonne nuit. https://t.co/o38XorQk3X\",\"Quote\":364},{\"tweetId\":\"1970062390952686011\",\"text\":\"Il y a cinq jours, Qatar Airways annon\u00e7ait \u00eatre sponsor de la c\u00e9r\u00e9monie du Ballon d'Or et pas n'importe comment : la compagnie qatarie devenait la premi\u00e8re de l'histoire \u00e0 \u00eatre \\\"presenting partner\\\" de l'\u00e9v\u00e9n\u00e9ment\\n\\nEn gros, cela signifie un gros ch\u00e8que en contrepartie et une\u2026\",\"Quote\":102},{\"tweetId\":\"1969705805151863215\",\"text\":\"J\u2019arr\u00eaterai de porter du Carhartt ou du Adidas quand les gens de droite n\u2019utiliseront plus leur carte vitale et ne prendront plus aucun cong\u00e9 pay\u00e9 \ud83e\udd17\",\"Quote\":63},{\"tweetId\":\"1970110835382247526\",\"text\":\"Introducing NikeSKIMS. \\n\\nArrives 9.26 at 7AM PT at https://t.co/AvZKZiEM51, https://t.co/8MYenSS4Gi, and select Nike and SKIMS retail locations. https://t.co/Qq8SiOsvzQ\",\"Quote\":58},{\"tweetId\":\"1970434717632598201\",\"text\":\"la birk de nike passe \u00e0 66\u20ac (on r\u00e9p\u00e8te confort facile \u00e0 mettre et grave quali)  \\n\\nhttps://t.co/2LNzQHCTKo https://t.co/zVG3j3XCgB\",\"Quote\":43}]",
+                "verticals": "Football (soccer),News,Politics,Console & PC gaming,Crypto",
+                "top_hashtags": "UCL,ballondor,BallonDor,BallondOr,FC26,TerraceIcons,QatarAirways,OL,PSG,OMPSG",
+                "top_mentions": "ballondor,qatarairways,EmilioSansolini,EASPORTSFC,adidasfootball,dembouz,adidasFR,_BeFootball,mudboyyy,DedecotStyle",
+                "entity_names": "Fashion,Athletic apparel,Retail industry,Nike,Soccer,Adidas,Adidas US,Gaming,Popular Images,Video games",
+                "top_creators": "adidasfootball,ChampionsLeague,lnstantFoot,CaminoTV,Romain_Molina,NicolasFramont,ballondor,FitThemAll,KimKardashian,Baswa_",
+                "ai_summary": "The 'Sponsors/Partners' category has a smaller footprint with 27,343 posts and 15,208,518 impressions, but engagement remains notable with 192,661 favorites and 26,066 retweets, indicating targeted audience interest. Content focuses on brands like Adidas and Nike, with hashtags like #UCL and mentions of @adidasfootball, appealing to a male-heavy (80.55%) audience aged 25-34 (38.68%) interested in football and gaming. Top posts, such as a viral Adidas collection for Ousmane Demb\u00e9l\u00e9 (1.47M impressions), highlight the potential for sponsor-driven campaigns tied to player achievements to boost visibility and engagement."
+        },
+        {
+                "name": "Women's Ballon d'Or",
+                "impressions": 5830554,
+                "posts": 10762,
+                "reply": 877,
+                "favorite": 41118,
+                "retweet": 2942,
+                "video_views": 454128,
+                "no_of_authors": 8435,
+                "engagement": 44937,
+                        "age_data": [
+                                    {
+                                                "label": "18-24",
+                                "value": 28.02
+                                    },
+                                    {
+                                                "label": "25-34",
+                                "value": 41.37
+                                    },
+                                    {
+                                                "label": "35-44",
+                                "value": 15.55
+                                    },
+                                    {
+                                                "label": "45-54",
+                                "value": 6.42
+                                    },
+                                    {
+                                                "label": "55-64",
+                                "value": 3.66
+                                    },
+                                    {
+                                                "label": "Over65",
+                                "value": 4.98
+                                    }
+                        ],
+                        "gender_data": [
+                                    {
+                                                "label": "FEMALE",
+                                "value": 25.21
+                                    },
+                                    {
+                                                "label": "MALE",
+                                "value": 74.79
+                        }
+                ],
+                "top_photos": "[{\"tweetId\":\"1970225593217097751\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! AITANA BONMATI \ud83c\uddea\ud83c\uddf8 REMPORTE LE BALLON D\u2019OR F\u00c9MININ 2025 !!!! \ud83c\udf15 #BallonDor https://t.co/3co7vbPF2Q\",\"Impressions\":1626293,\"photo_url\":\"http://pbs.twimg.com/media/G1elm65XIAAuHbh.jpg\"},{\"tweetId\":\"1970225364266869100\",\"text\":\"AITANA BONMATI IS THE 2025 WOMEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/wxk3OZsTle\",\"Impressions\":603252,\"photo_url\":\"http://pbs.twimg.com/media/G1elaRsWoAA2Run.jpg\"},{\"tweetId\":\"1970226086802846108\",\"text\":\"\ud83d\udde3\ufe0f Aitana Bonmati : \\\"C'est la 3\u00e8me fois cons\u00e9cutive, je ne sais plus quoi raconter. \ud83d\ude02\\\" https://t.co/YIEo4mKjxd\",\"Impressions\":542459,\"photo_url\":\"http://pbs.twimg.com/media/G1emJlLXAAEszAn.png\"},{\"tweetId\":\"1970225505627500862\",\"text\":\"\ud83d\udea8\ud83c\uddea\ud83c\uddf8\u26bd\ufe0f\ud83d\udc9b ALERTE INFO | Aitana Bonmati REMPORTE le Ballon d\u2019Or 2025. https://t.co/aHZVXgoYh2\",\"Impressions\":381200,\"photo_url\":\"http://pbs.twimg.com/media/G1elpmXWoAAnGAh.jpg\"},{\"tweetId\":\"1970225436069433701\",\"text\":\"\ud83d\udea8 \ud835\udde2\ud835\uddd9\ud835\uddd9\ud835\udddc\ud835\uddd6\ud835\udddc\ud835\uddd8\ud835\udddf ! \ud835\uddd4\ud835\udddc\ud835\udde7\ud835\uddd4\ud835\udde1\ud835\uddd4 \ud835\uddd5\ud835\udde2\ud835\udde1\ud835\udde0\ud835\uddd4\ud835\udde7\ud835\udddc \ud835\udde5\ud835\uddd8\ud835\udde0\ud835\udde3\ud835\udde2\ud835\udde5\ud835\udde7\ud835\uddd8 \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7'\ud835\udde2\ud835\udde5 \ud835\uddd9\ud835\uddd8\u0301\ud835\udde0\ud835\udddc\ud835\udde1\ud835\udddc\ud835\udde1 \ud835\udde3\ud835\udde2\ud835\udde8\ud835\udde5 \ud835\udddf\ud835\uddd4 \ud835\udfef\ud835\uddd8\u0300\ud835\udde0\ud835\uddd8 \ud835\uddd9\ud835\udde2\ud835\udddc\ud835\udde6 \ud835\uddd6\ud835\udde2\ud835\udde1\ud835\udde6\ud835\uddd8\u0301\ud835\uddd6\ud835\udde8\ud835\udde7\ud835\udddc\ud835\udde9\ud835\uddd8 ! \ud83c\udf15\ud83c\uddea\ud83c\uddf8\\n\\nINCROYABLE ! Pour la 3\u00e8me fois de suite, Aitana Bonmati remporte le troph\u00e9e ultime : \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1\u2026 https://t.co/ZDVGo4jHO3\",\"Impressions\":128978,\"photo_url\":\"http://pbs.twimg.com/media/G1ekkcUW0AAgR0m.jpg\"}]",
+                "top_gifs": "[{\"tweetId\":\"1970225395581554884\",\"text\":\"Et m\u00eame si c\u2019est Aitana Bonmati qui gagne bah je pourrais jamais avoir le seum contre la goat idk https://t.co/v4N0eY19fj\",\"Impressions\":3425,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eljWcXoAAdHWF.jpg\"},{\"tweetId\":\"1970192819232088211\",\"text\":\"ALEXIA PUTELLAS https://t.co/z2uYzy1IJr\",\"Impressions\":830,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1eH7B6WkAAeDvm.jpg\"},{\"tweetId\":\"1970437767994753217\",\"text\":\"Toujours pas compris pourquoi Aitana Bonmati  a gagn\u00e9, alors qu\u2019il y a dans le classement 3 joueuses d\u2019Arsenal, club qui a gagn\u00e9 la Women Champions League cette ann\u00e9e : Leah Williamson, Alessia Russo, Chloe Kelly (qui a marqu\u00e9 le but de la victoire). Joueuses qui sont aussi en\u2026 https://t.co/EXDaVp1QTm\",\"Impressions\":771,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1hkQ8MXoAAddz7.jpg\"},{\"tweetId\":\"1970226061825978835\",\"text\":\"Aitana Bonmati https://t.co/xugkjV0fOr\",\"Impressions\":571,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1emKFVWMAADIBO.jpg\"},{\"tweetId\":\"1970150979963179303\",\"text\":\"pina y caro por debajo de atencion: lucy bronze y chloe kelly https://t.co/BV4E88tv3x\",\"Impressions\":456,\"photo_url\":\"http://pbs.twimg.com/tweet_video_thumb/G1dh3sZWIAA7Jia.jpg\"}]",
+                "top_videos": "[{\"tweetId\":\"1970213938223817032\",\"text\":\"Absolute cinema \ud83e\udd23\ud83e\udd23 \\nMary Earps qui a boud\u00e9 la s\u00e9lection car Hannah Hampton est pass\u00e9e devant elle, ce soir c'est elle qui donne les troph\u00e9es Yashin avec Buffon \ud83e\udd23\ud83d\ude2d\\n\\nHeureusement qu'elle s'occupe de Donnarumma.\\nhttps://t.co/lbGZNtdXPp\",\"Impressions\":242722,\"video_url\":\"https://video.twimg.com/amplify_video/1970212685502447616/vid/avc1/1280x720/ILJZ1m_Z6fI3BGF0.mp4?tag=14\",\"photo_url\":\"http://pbs.twimg.com/media/G1eZ_sqXoAAKiC0.jpg\",\"video_views\":152918},{\"tweetId\":\"1970213421405650958\",\"text\":\"\ud83d\udcac\u200b Hannah Hampton\\\"s speech after winning the 2025 Women's Kopa Trophy\\n\\n#ballondor https://t.co/n2993q6xUF\",\"Impressions\":109590,\"video_url\":\"https://video.twimg.com/amplify_video/1970213361204805632/vid/avc1/1280x720/aiWUFKttGh2Jx-DS.mp4?tag=14\",\"photo_url\":\"http://pbs.twimg.com/media/G1eanAlW0AAViV6.jpg\",\"video_views\":75793},{\"tweetId\":\"1970212743794876854\",\"text\":\"\ud83e\udde4 GIANLUIGI DONNARUMMA AND HANNAH HAMPTON THE 2025 YACHINE TROPHY WINNERS!\\n\\n#ballondor https://t.co/fkUGyIwBzW\",\"Impressions\":93310,\"video_url\":\"https://video.twimg.com/amplify_video/1970212685502447616/vid/avc1/1280x720/ILJZ1m_Z6fI3BGF0.mp4?tag=14\",\"photo_url\":\"http://pbs.twimg.com/media/G1eZ_sqXoAAKiC0.jpg\",\"video_views\":70752},{\"tweetId\":\"1970176430685179933\",\"text\":\"Hannah Hampton. \ud83e\udd29\\n\\n#BallonDor https://t.co/Yfba3jaeLN\",\"Impressions\":39000,\"video_url\":\"https://video.twimg.com/amplify_video/1970176293204369408/vid/avc1/2160x2880/rxBO_wGkemTKQ1Da.mp4?tag=21\",\"photo_url\":\"http://pbs.twimg.com/amplify_video_thumb/1970176293204369408/img/IoP4dW7s7ViFrBXp.jpg\",\"video_views\":28636},{\"tweetId\":\"1970245820462014833\",\"text\":\"\ud83d\udcac\u200b Aitana Bonmati explained how the Ballon d'Or build her personality\\n\\n#ballondor https://t.co/rg8Wr0h2Ak\",\"Impressions\":20795,\"video_url\":\"https://video.twimg.com/amplify_video/1970245761557221376/vid/avc1/1280x720/xap0TWaswsQs7t6l.mp4?tag=14\",\"photo_url\":\"http://pbs.twimg.com/media/G1e4E93WgAAyUvY.jpg\",\"video_views\":17423}]",
+                "top_posts": "[{\"tweetId\":\"1970225593217097751\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! AITANA BONMATI \ud83c\uddea\ud83c\uddf8 REMPORTE LE BALLON D\u2019OR F\u00c9MININ 2025 !!!! \ud83c\udf15 #BallonDor https://t.co/3co7vbPF2Q\",\"Impressions\":1626293},{\"tweetId\":\"1970225364266869100\",\"text\":\"AITANA BONMATI IS THE 2025 WOMEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/wxk3OZsTle\",\"Impressions\":603252},{\"tweetId\":\"1970226086802846108\",\"text\":\"\ud83d\udde3\ufe0f Aitana Bonmati : \\\"C'est la 3\u00e8me fois cons\u00e9cutive, je ne sais plus quoi raconter. \ud83d\ude02\\\" https://t.co/YIEo4mKjxd\",\"Impressions\":542459},{\"tweetId\":\"1970225505627500862\",\"text\":\"\ud83d\udea8\ud83c\uddea\ud83c\uddf8\u26bd\ufe0f\ud83d\udc9b ALERTE INFO | Aitana Bonmati REMPORTE le Ballon d\u2019Or 2025. https://t.co/aHZVXgoYh2\",\"Impressions\":381200},{\"tweetId\":\"1970213938223817032\",\"text\":\"Absolute cinema \ud83e\udd23\ud83e\udd23 \\nMary Earps qui a boud\u00e9 la s\u00e9lection car Hannah Hampton est pass\u00e9e devant elle, ce soir c'est elle qui donne les troph\u00e9es Yashin avec Buffon \ud83e\udd23\ud83d\ude2d\\n\\nHeureusement qu'elle s'occupe de Donnarumma.\\nhttps://t.co/lbGZNtdXPp\",\"Impressions\":242722}]",
+                "top_posts_reply": "[{\"tweetId\":\"1970225593217097751\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! AITANA BONMATI \ud83c\uddea\ud83c\uddf8 REMPORTE LE BALLON D\u2019OR F\u00c9MININ 2025 !!!! \ud83c\udf15 #BallonDor https://t.co/3co7vbPF2Q\",\"Reply\":161},{\"tweetId\":\"1970225505627500862\",\"text\":\"\ud83d\udea8\ud83c\uddea\ud83c\uddf8\u26bd\ufe0f\ud83d\udc9b ALERTE INFO | Aitana Bonmati REMPORTE le Ballon d\u2019Or 2025. https://t.co/aHZVXgoYh2\",\"Reply\":87},{\"tweetId\":\"1970225364266869100\",\"text\":\"AITANA BONMATI IS THE 2025 WOMEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/wxk3OZsTle\",\"Reply\":52},{\"tweetId\":\"1970226086802846108\",\"text\":\"\ud83d\udde3\ufe0f Aitana Bonmati : \\\"C'est la 3\u00e8me fois cons\u00e9cutive, je ne sais plus quoi raconter. \ud83d\ude02\\\" https://t.co/YIEo4mKjxd\",\"Reply\":48},{\"tweetId\":\"1970225456206192811\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! AITANA BONMATI \ud83c\uddea\ud83c\uddf8 REMPORTE LE BALLON D\u2019OR 2025 !!!! \ud83c\udf15 #BallonDor https://t.co/04Gxh7Uifl\",\"Reply\":42}]",
+                "top_posts_favorite": "[{\"tweetId\":\"1970226086802846108\",\"text\":\"\ud83d\udde3\ufe0f Aitana Bonmati : \\\"C'est la 3\u00e8me fois cons\u00e9cutive, je ne sais plus quoi raconter. \ud83d\ude02\\\" https://t.co/YIEo4mKjxd\",\"Favorite\":9703},{\"tweetId\":\"1970225364266869100\",\"text\":\"AITANA BONMATI IS THE 2025 WOMEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/wxk3OZsTle\",\"Favorite\":3098},{\"tweetId\":\"1970225593217097751\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! AITANA BONMATI \ud83c\uddea\ud83c\uddf8 REMPORTE LE BALLON D\u2019OR F\u00c9MININ 2025 !!!! \ud83c\udf15 #BallonDor https://t.co/3co7vbPF2Q\",\"Favorite\":2546},{\"tweetId\":\"1970225505627500862\",\"text\":\"\ud83d\udea8\ud83c\uddea\ud83c\uddf8\u26bd\ufe0f\ud83d\udc9b ALERTE INFO | Aitana Bonmati REMPORTE le Ballon d\u2019Or 2025. https://t.co/aHZVXgoYh2\",\"Favorite\":1859},{\"tweetId\":\"1970225436069433701\",\"text\":\"\ud83d\udea8 \ud835\udde2\ud835\uddd9\ud835\uddd9\ud835\udddc\ud835\uddd6\ud835\udddc\ud835\uddd8\ud835\udddf ! \ud835\uddd4\ud835\udddc\ud835\udde7\ud835\uddd4\ud835\udde1\ud835\uddd4 \ud835\uddd5\ud835\udde2\ud835\udde1\ud835\udde0\ud835\uddd4\ud835\udde7\ud835\udddc \ud835\udde5\ud835\uddd8\ud835\udde0\ud835\udde3\ud835\udde2\ud835\udde5\ud835\udde7\ud835\uddd8 \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7'\ud835\udde2\ud835\udde5 \ud835\uddd9\ud835\uddd8\u0301\ud835\udde0\ud835\udddc\ud835\udde1\ud835\udddc\ud835\udde1 \ud835\udde3\ud835\udde2\ud835\udde8\ud835\udde5 \ud835\udddf\ud835\uddd4 \ud835\udfef\ud835\uddd8\u0300\ud835\udde0\ud835\uddd8 \ud835\uddd9\ud835\udde2\ud835\udddc\ud835\udde6 \ud835\uddd6\ud835\udde2\ud835\udde1\ud835\udde6\ud835\uddd8\u0301\ud835\uddd6\ud835\udde8\ud835\udde7\ud835\udddc\ud835\udde9\ud835\uddd8 ! \ud83c\udf15\ud83c\uddea\ud83c\uddf8\\n\\nINCROYABLE ! Pour la 3\u00e8me fois de suite, Aitana Bonmati remporte le troph\u00e9e ultime : \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1\u2026 https://t.co/ZDVGo4jHO3\",\"Favorite\":1370}]",
+                "top_posts_retweet": "[{\"tweetId\":\"1970225364266869100\",\"text\":\"AITANA BONMATI IS THE 2025 WOMEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/wxk3OZsTle\",\"Retweet\":423},{\"tweetId\":\"1970226086802846108\",\"text\":\"\ud83d\udde3\ufe0f Aitana Bonmati : \\\"C'est la 3\u00e8me fois cons\u00e9cutive, je ne sais plus quoi raconter. \ud83d\ude02\\\" https://t.co/YIEo4mKjxd\",\"Retweet\":240},{\"tweetId\":\"1970225593217097751\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! AITANA BONMATI \ud83c\uddea\ud83c\uddf8 REMPORTE LE BALLON D\u2019OR F\u00c9MININ 2025 !!!! \ud83c\udf15 #BallonDor https://t.co/3co7vbPF2Q\",\"Retweet\":216},{\"tweetId\":\"1970225436069433701\",\"text\":\"\ud83d\udea8 \ud835\udde2\ud835\uddd9\ud835\uddd9\ud835\udddc\ud835\uddd6\ud835\udddc\ud835\uddd8\ud835\udddf ! \ud835\uddd4\ud835\udddc\ud835\udde7\ud835\uddd4\ud835\udde1\ud835\uddd4 \ud835\uddd5\ud835\udde2\ud835\udde1\ud835\udde0\ud835\uddd4\ud835\udde7\ud835\udddc \ud835\udde5\ud835\uddd8\ud835\udde0\ud835\udde3\ud835\udde2\ud835\udde5\ud835\udde7\ud835\uddd8 \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7'\ud835\udde2\ud835\udde5 \ud835\uddd9\ud835\uddd8\u0301\ud835\udde0\ud835\udddc\ud835\udde1\ud835\udddc\ud835\udde1 \ud835\udde3\ud835\udde2\ud835\udde8\ud835\udde5 \ud835\udddf\ud835\uddd4 \ud835\udfef\ud835\uddd8\u0300\ud835\udde0\ud835\uddd8 \ud835\uddd9\ud835\udde2\ud835\udddc\ud835\udde6 \ud835\uddd6\ud835\udde2\ud835\udde1\ud835\udde6\ud835\uddd8\u0301\ud835\uddd6\ud835\udde8\ud835\udde7\ud835\udddc\ud835\udde9\ud835\uddd8 ! \ud83c\udf15\ud83c\uddea\ud83c\uddf8\\n\\nINCROYABLE ! Pour la 3\u00e8me fois de suite, Aitana Bonmati remporte le troph\u00e9e ultime : \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1\u2026 https://t.co/ZDVGo4jHO3\",\"Retweet\":98},{\"tweetId\":\"1970227716927693187\",\"text\":\"2021 : Alexia Putellas\\n2022 : Alexia Putellas\\n2023 : Aitana Bonmati\\n2024 : Aitana Bonmati\\n2025 : Aitana Bonmati\\n\\nDomination Blaugrana du Ballon d\u2019Or f\u00e9minin \ud83d\udc99\u2764\ufe0f https://t.co/Kxl2qCzaCb\",\"Retweet\":86}]",
+                "top_posts_quote": "[{\"tweetId\":\"1970225364266869100\",\"text\":\"AITANA BONMATI IS THE 2025 WOMEN'S BALLON D'OR!\\n\\n#ballondor https://t.co/wxk3OZsTle\",\"Quote\":131},{\"tweetId\":\"1970225593217097751\",\"text\":\"\ud83d\udea8\ud83d\udea8 OFFICIEL ! AITANA BONMATI \ud83c\uddea\ud83c\uddf8 REMPORTE LE BALLON D\u2019OR F\u00c9MININ 2025 !!!! \ud83c\udf15 #BallonDor https://t.co/3co7vbPF2Q\",\"Quote\":108},{\"tweetId\":\"1970226086802846108\",\"text\":\"\ud83d\udde3\ufe0f Aitana Bonmati : \\\"C'est la 3\u00e8me fois cons\u00e9cutive, je ne sais plus quoi raconter. \ud83d\ude02\\\" https://t.co/YIEo4mKjxd\",\"Quote\":40},{\"tweetId\":\"1970225436069433701\",\"text\":\"\ud83d\udea8 \ud835\udde2\ud835\uddd9\ud835\uddd9\ud835\udddc\ud835\uddd6\ud835\udddc\ud835\uddd8\ud835\udddf ! \ud835\uddd4\ud835\udddc\ud835\udde7\ud835\uddd4\ud835\udde1\ud835\uddd4 \ud835\uddd5\ud835\udde2\ud835\udde1\ud835\udde0\ud835\uddd4\ud835\udde7\ud835\udddc \ud835\udde5\ud835\uddd8\ud835\udde0\ud835\udde3\ud835\udde2\ud835\udde5\ud835\udde7\ud835\uddd8 \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1 \ud835\uddd7'\ud835\udde2\ud835\udde5 \ud835\uddd9\ud835\uddd8\u0301\ud835\udde0\ud835\udddc\ud835\udde1\ud835\udddc\ud835\udde1 \ud835\udde3\ud835\udde2\ud835\udde8\ud835\udde5 \ud835\udddf\ud835\uddd4 \ud835\udfef\ud835\uddd8\u0300\ud835\udde0\ud835\uddd8 \ud835\uddd9\ud835\udde2\ud835\udddc\ud835\udde6 \ud835\uddd6\ud835\udde2\ud835\udde1\ud835\udde6\ud835\uddd8\u0301\ud835\uddd6\ud835\udde8\ud835\udde7\ud835\udddc\ud835\udde9\ud835\uddd8 ! \ud83c\udf15\ud83c\uddea\ud83c\uddf8\\n\\nINCROYABLE ! Pour la 3\u00e8me fois de suite, Aitana Bonmati remporte le troph\u00e9e ultime : \ud835\udddf\ud835\uddd8 \ud835\uddd5\ud835\uddd4\ud835\udddf\ud835\udddf\ud835\udde2\ud835\udde1\u2026 https://t.co/ZDVGo4jHO3\",\"Quote\":37},{\"tweetId\":\"1970237031117713892\",\"text\":\"Alexia Putellas in a backless dress.\ud83d\ude29 https://t.co/h9piQPqxRi\",\"Quote\":17}]",
+                "verticals": "Football (soccer),News,Politics,Sports News,Crypto",
+                "top_hashtags": "BallonDor,ballondor,Troph\u00e9eYachine,Lionesses,BallondOr,BallonDor2025,Bonmati,They,AlexiaBallonDor,CFCW",
+                "top_mentions": "ballondor,hannahhampton_,tamerra_nikol,l3yznis,frexy0004,equipedefranceF,ClaraMto,alexiaputellas,LucyBronze,davidtimon_",
+                "entity_names": "Soccer,Sports events,Ballon d'Or,Aitana Bonmat\u00ed Conca,Alexia Putellas,Party & Celebration,Trophies & Awards,Popular Images,Trophies,FC Barcelona",
+                "top_creators": "ActuFoot_,ballondor,VisionBlaugrana,CerfiaFR,mmsoumare,lequipe,lnstantFoot,_BeFootball,jlcats_,ChelseaFCW",
+                "ai_summary": "The 'Women's Ballon d'Or' category has the lowest volume with 10,762 posts and 5,830,554 impressions, yet engagement is meaningful with 41,118 favorites and 454,128 video views, showing niche but dedicated interest. Content highlights players like Aitana Bonmat\u00ed, with hashtags like #BallonDor and mentions of @ballondor, targeting a relatively balanced audience (25.21% female) aged 25-34 (41.37%) interested in football and sports news. The top post announcing Bonmat\u00ed\u2019s win (1.63M impressions) suggests an opportunity to amplify women\u2019s football content through celebratory and visually compelling posts to grow this segment."
+        }
+];
+        
+        // Metadata
+        const countryDisplay = "France";
+        const dateRange = "2025-09-21 to 2025-09-23";
+        const categoryName = "Football Analytics";
+        let currentCategory = null;
+        let currentPage = 'overview';
+
+        function initializeDashboard() {
+            if (allData.length > 0) {
+                currentCategory = allData[0];
+            }
+            setupNavigation();
+            createCategoryTabs();
+            populateAllSummaryCards();
+            handlePageChange();
+        }
+
+        function setupNavigation() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage = link.getAttribute('data-page');
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    handlePageChange();
+                });
+            });
+        }
+          
+        function handlePageChange() {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(currentPage).classList.add('active');
+              
+            const categoryTabs = document.getElementById('category-tabs-container');
+            const needsCategory = currentPage === 'metrics' || currentPage === 'audience' || currentPage === 'trends' || currentPage === 'insights' || currentPage === 'media';
+            categoryTabs.style.display = needsCategory ? 'flex' : 'none';
+
+            if(needsCategory) {
+                 if (!currentCategory) {
+                    currentCategory = allData[0];
+                }
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.category === currentCategory.name);
+                });
+                updateCategoryView();
+            } else {
+                 createOverviewCharts();
+            }
+        }
+
+        function createCategoryTabs() {
+            const container = document.getElementById('category-tabs-container');
+            container.innerHTML = '';
+            allData.forEach((category, index) => {
+                const tab = document.createElement('a');
+                tab.href = '#';
+                tab.className = 'category-tab';
+                if (index === 0) {
+                    tab.classList.add('active');
+                }
+                tab.dataset.category = category.name;
+                tab.textContent = category.name;
+                  
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentCategory = allData.find(c => c.name === category.name);
+                    document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    updateCategoryView();
+                });
+                  
+                container.appendChild(tab);
+            });
+        }
+
+        function updateCategoryView() {
+            if (!currentCategory) return;
+
+            if (currentPage === 'metrics') {
+                const view = document.getElementById('metrics-view');
+                view.innerHTML = generateMetricsHTML(currentCategory);
+            } else if (currentPage === 'audience') {
+                const view = document.getElementById('audience-view');
+                view.innerHTML = generateAudienceHTML(currentCategory);
+                createDemographicCharts(currentCategory);
+            } else if (currentPage === 'trends') {
+                const view = document.getElementById('trends-view');
+                view.innerHTML = generateTrendsHTML(currentCategory);
+                // Create daily chart if data exists
+                if (currentCategory.daily_data_json) {
+                    createDailyChart(currentCategory);
+                }
+            } else if (currentPage === 'insights') {
+                const view = document.getElementById('insights-view');
+                view.innerHTML = generateInsightsHTML(currentCategory);
+            } else if (currentPage === 'media') {
+                const view = document.getElementById('media-view');
+                view.innerHTML = generateMediaPageHTML(currentCategory);
+            }
+        }
+
+        function populateAllSummaryCards() {
+            const container = document.getElementById('all-summaries-container');
+            if (!container) return;
+            
+            const summaryCards = allData.map(category => {
+                if (!category.ai_summary) return '';
+                
+                return `
+                    <div class="summary-card" style="background: var(--x-card-background); border: 1px solid var(--x-border-color); border-radius: 16px; padding: 20px;">
+                        <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                            <h3 style="color: var(--x-text-primary); font-size: 18px; font-weight: bold; margin: 0; flex-grow: 1;">${category.name}</h3>
+                            <div style="background: var(--x-border-color); color: var(--x-text-secondary); font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 12px;">
+                                ${formatNumber(category.impressions)} impressions
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                            <div style="width: 16px; height: 16px; margin-right: 8px; display: flex; align-items: center; justify-content: center;">
+                                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: var(--x-text-secondary);">
+                                    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                                    <path d="M7 7 L17 17" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <span style="color: var(--x-text-secondary); font-size: 14px; font-weight: 500;">Grok Insights</span>
+                        </div>
+                        <p style="line-height: 1.6; color: var(--x-text-primary); margin: 0; font-size: 14px;">${category.ai_summary}</p>
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--x-border-color);">
+                            <div style="display: flex; gap: 16px; color: var(--x-text-secondary); font-size: 13px;">
+                                <span>${formatNumber(category.posts)} posts</span>
+                                <span>${formatNumber(category.engagement)} engagement</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).filter(card => card).join('');
+            
+            container.innerHTML = summaryCards;
+        }
+
+        function selectCategory(categoryName) {
+            currentCategory = allData.find(c => c.name === categoryName);
+            if (!currentCategory) return;
+            
+            // Update category tabs
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.category === categoryName) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update views
+            updateCategoryView();
+        }
+          
+         function generateMetricsHTML(category) {
+               
+             return `
+                 <div class="section-title">${category.name} Performance Metrics</div>
+                   
+                 <div style="padding: 16px;">
+                     <div class="insights-grid" style="border: none; background: transparent; padding: 0; gap: 16px;">
+                         <div class="metric-card">
+                             <div class="metric-label">Total Impressions</div>
+                             <div class="metric-value">${formatNumber(category.impressions)}</div>
+                         </div>
+                          <div class="metric-card">
+                             <div class="metric-label">Total Posts</div>
+                             <div class="metric-value">${formatNumber(category.posts)}</div>
+                         </div>
+                          <div class="metric-card">
+                             <div class="metric-label">Total Engagement</div>
+                             <div class="metric-value">${formatNumber((category.reply || 0) + (category.favorite || 0) + (category.retweet || 0))}</div>
+                         </div>
+                          <div class="metric-card">
+                             <div class="metric-label">Avg. Impressions/Post</div>
+                             <div class="metric-value">${formatNumber(Math.round(category.impressions / category.posts))}</div>
+                         </div>
+                     </div>
+                 </div>
+
+                 <div style="padding: 16px;">
+                     <h3 style="color: var(--x-text-primary); font-size: 18px; font-weight: bold; margin-bottom: 16px;">📊 Engagement Breakdown</h3>
+                     <div class="insights-grid" style="border: none; background: transparent; padding: 0; gap: 16px;">
+                         <div class="metric-card">
+                             <div class="metric-label">↩ Replies</div>
+                             <div class="metric-value">${formatNumber(category.reply || 0)}</div>
+                     </div>
+                          <div class="metric-card">
+                             <div class="metric-label">⟲ Retweets</div>
+                             <div class="metric-value">${formatNumber(category.retweet || 0)}</div>
+                 </div>
+                          <div class="metric-card">
+                             <div class="metric-label">♡ Likes</div>
+                             <div class="metric-value">${formatNumber(category.favorite || 0)}</div>
+                     </div>
+                          <div class="metric-card">
+                             <div class="metric-label">▶ Video Views</div>
+                             <div class="metric-value">${formatNumber(category.video_views || 0)}</div>
+                 </div>
+                     </div>
+                 </div>
+
+             `;
+         }
+
+         function generateTrendsHTML(category) {
+             if (!category.daily_data_json) {
+                 return `
+                     <div style="text-align: center; color: var(--x-text-secondary); padding: 40px;">
+                         <h3>📈 Daily Trends</h3>
+                         <p>No daily trend data available for ${category.name}</p>
+                     </div>
+                 `;
+             }
+
+             let dailyData = [];
+             try {
+                 dailyData = typeof category.daily_data_json === 'string' ? 
+                     JSON.parse(category.daily_data_json) : category.daily_data_json;
+             } catch (e) {
+                 console.error('Error parsing daily data:', e);
+                 dailyData = [];
+             }
+
+             return `
+                 <div class="section-title">📈 ${category.name} Daily Trends</div>
+                 
+                 <div style="padding: 16px;">
+                     <div class="chart-card">
+                         <div class="chart-title">Posts Per Day</div>
+                         <div class="chart-container">
+                             <canvas id="dailyChart_${category.name.replace(/\s+/g, '_')}"></canvas>
+                         </div>
+                     </div>
+                 </div>
+
+             `;
+         }
+          
+         function generateInsightsHTML(category) {
+             return `
+                 <div class="section-title">${category.name} Themes</div>
+                   
+                 <div style="padding: 16px;">
+                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                         ${generateVerticalInsightCard('Top Hashtags', category.top_hashtags, '🏷️')}
+                         ${generateVerticalInsightCard('Top Mentions', category.top_mentions, '📢')}
+                         ${generateVerticalInsightCard('Top Topics', category.entity_names, '🏢')}
+                         ${generateVerticalInsightCard('Top Voices', category.top_creators, '👤')}
+                     </div>
+                 </div>
+             `;
+         }
+
+         function generateAudienceHTML(category) {
+               
+             return `
+                 <div class="section-title">${category.name} Audience Insights</div>
+                   
+                 <div class="audience-layout" style="display: grid; grid-template-columns: 1fr 0.8fr 1fr; gap: 24px; padding: 24px; border-top: 1px solid var(--x-border-color); border-bottom: 1px solid var(--x-border-color); align-items: stretch;">
+                     <div class="chart-card" style="height: 280px; display: flex; flex-direction: column;">
+                         <div class="chart-title" style="text-align: center; margin-bottom: 16px;">Age Demographics</div>
+                         <div class="chart-container" style="flex: 1;">
+                             <canvas id="ageChart_${category.name.replace(/\s+/g, '_')}"></canvas>
+                         </div>
+                     </div>
+                     <div class="chart-card gender-chart" style="height: 280px; display: flex; flex-direction: column;">
+                         <div class="chart-title" style="text-align: center; margin-bottom: 16px;">Gender Distribution</div>
+                         <div class="chart-container" style="flex: 1;">
+                             <canvas id="genderChart_${category.name.replace(/\s+/g, '_')}"></canvas>
+                         </div>
+                     </div>
+                     <div class="chart-card" style="height: 280px; display: flex; flex-direction: column; gap: 20px; padding: 20px;">
+                         <div class="metric-card" style="height: 100px; display: flex; flex-direction: column; justify-content: center; text-align: center; background: #000000;">
+                             <div class="metric-label" style="margin-bottom: 8px;">Total Authors</div>
+                             <div class="metric-value">${formatNumber(category.no_of_authors || 0)}</div>
+                         </div>
+                         ${category.verticals ? `
+                         <div class="audience-interests-card metric-card" style="flex: 1; display: flex; flex-direction: column; padding: 16px; background: #000000;">
+                             <h4 style="color: var(--x-text-primary); font-size: 16px; font-weight: bold; margin: 0 0 12px 0; text-align: center;">Audience Interests</h4>
+                             <div style="font-size: 18px; color: var(--x-text-primary); line-height: 1.5; font-weight: 500; text-align: left; flex: 1;">
+                                 ${category.verticals.split(',').map(interest => `<div style="margin-bottom: 6px; padding-left: 8px;">${interest.trim()}</div>`).join('')}
+                             </div>
+                         </div>
+                         ` : ''}
+                     </div>
+                 </div>
+             `;
+         }
+          
+        function generateMediaPageHTML(category) {
+            return `
+                <div class="section-title">${category.name} Media</div>
+                
+                <div class="media-category-row">
+                    ${generateMediaRow('Top Posts', category.top_posts, 'Post')}
+                    ${generateMediaRow('Top Photos', category.top_photos, 'Photo')}
+                    ${generateMediaRow('Top Videos', category.top_videos, 'Video')}
+                    ${generateMediaRow('Top GIFs', category.top_gifs, 'GIF')}
+                </div>
+
+                <div style="padding: 16px; border-bottom: 1px solid var(--x-border-color);">
+                    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 12px; padding-left: 0;">Top Engagement Posts</h3>
+                    <div class="media-items-row" style="padding: 0;">
+                        ${generateEngagementCard('Reply', category.top_posts_reply)}
+                        ${generateEngagementCard('Favorite', category.top_posts_favorite)}
+                        ${generateEngagementCard('Retweet', category.top_posts_retweet)}
+                        ${generateEngagementCard('Quote', category.top_posts_quote)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateVerticalInsightCard(title, data, icon) {
+            if (!data || !data.trim()) return `
+                <div class="insight-card" style="background: var(--x-card-background); border: 1px solid var(--x-border-color); border-radius: 16px; padding: 20px; min-height: 200px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                        <span style="font-size: 18px; margin-right: 8px;">${icon}</span>
+                        <h4 style="color: var(--x-text-primary); font-size: 16px; font-weight: bold; margin: 0;">${title}</h4>
+                    </div>
+                    <div style="color: var(--x-text-secondary); font-size: 14px; text-align: center; padding: 40px 0;">No data available</div>
+                </div>
+            `;
+            
+            // Split data into individual items
+            const items = data.split(',').map(item => item.trim()).filter(item => item);
+            
+            // Generate the appropriate URL based on the title
+            function getItemUrl(item, title) {
+                const cleanItem = item.replace(/^[@#]/, ''); // Remove @ or # prefix if present
+                
+                if (title === 'Top Hashtags') {
+                    return `https://x.com/hashtag/${encodeURIComponent(cleanItem)}`;
+                } else if (title === 'Top Mentions' || title === 'Top Voices') {
+                    return `https://x.com/${encodeURIComponent(cleanItem)}`;
+                } else if (title === 'Top Topics') {
+                    return `https://x.com/search?q=${encodeURIComponent(cleanItem)}`;
+                }
+                return '#';
+            }
+            
+            return `
+                <div class="insight-card" style="background: var(--x-card-background); border: 1px solid var(--x-border-color); border-radius: 16px; padding: 20px; min-height: 200px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                        <span style="font-size: 18px; margin-right: 8px;">${icon}</span>
+                        <h4 style="color: var(--x-text-primary); font-size: 16px; font-weight: bold; margin: 0;">${title}</h4>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        ${items.slice(0, 10).map((item, index) => `
+                            <a href="${getItemUrl(item, title)}" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: inherit;">
+                                <div style="padding: 8px 12px; background: var(--x-card-background); border: 1px solid var(--x-border-color); border-radius: 6px; transition: all 0.2s; cursor: pointer;" 
+                                     onmouseover="this.style.backgroundColor='var(--x-border-color)'; this.style.transform='translateY(-1px)'" 
+                                     onmouseout="this.style.backgroundColor='var(--x-card-background)'; this.style.transform='translateY(0)'">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="color: var(--x-text-secondary); font-size: 13px; font-weight: 500; min-width: 20px;">${index + 1}</span>
+                                        <span style="color: var(--x-text-primary); font-size: 14px; font-weight: 600; word-break: break-word; line-height: 1.2;">${item}</span>
+                                        <span style="color: var(--x-text-secondary); font-size: 12px; margin-left: auto;">↗</span>
+                                    </div>
+                                </div>
+                            </a>
+                        `).join('')}
+                        ${items.length > 10 ? `
+                            <div style="color: var(--x-text-secondary); font-size: 12px; text-align: center; margin-top: 8px; font-style: italic;">
+                                +${items.length - 10} more items
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateInsightCard(title, data, icon) {
+            if (!data || !data.trim()) return `
+                <div style="background: var(--x-card-background); border: 1px solid var(--x-border-color); border-radius: 8px; padding: 16px; height: 120px;">
+                    <h4 style="color: var(--x-text-primary); font-size: 14px; font-weight: bold; margin-bottom: 8px;">${icon} ${title}</h4>
+                    <div style="font-size: 12px; color: var(--x-text-secondary);">No data available</div>
+                </div>
+            `;
+            
+            // Truncate data if too long and add proper wrapping
+            const truncatedData = data.length > 150 ? data.substring(0, 150) + '...' : data;
+            
+            return `
+                <div style="background: var(--x-card-background); border: 1px solid var(--x-border-color); border-radius: 8px; padding: 16px; height: 120px; display: flex; flex-direction: column;">
+                    <h4 style="color: var(--x-text-primary); font-size: 14px; font-weight: bold; margin-bottom: 8px; flex-shrink: 0;">${icon} ${title}</h4>
+                    <div style="font-size: 12px; color: var(--x-text-secondary); line-height: 1.4; overflow: hidden; word-wrap: break-word; word-break: break-word; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">${truncatedData}</div>
+                </div>
+            `;
+        }
+
+        function generateMediaRow(title, mediaData, type) {
+            if (!mediaData || mediaData === '[]') {
+                return `
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 12px; padding-left: 16px;">${title}</h3>
+                        <div style="padding: 0 16px; color: var(--x-text-secondary);">No ${type.toLowerCase()} data available</div>
+                    </div>
+                `;
+            }
+
+            let items = [];
+            try {
+                items = typeof mediaData === 'string' ? JSON.parse(mediaData) : mediaData;
+            } catch(e) {
+                return `
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 12px; padding-left: 16px;">${title}</h3>
+                        <div style="padding: 0 16px; color: var(--x-text-secondary);">Error loading ${type.toLowerCase()} data</div>
+                    </div>
+                `;
+            }
+
+            if (!Array.isArray(items) || items.length === 0) {
+                return `
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 12px; padding-left: 16px;">${title}</h3>
+                        <div style="padding: 0 16px; color: var(--x-text-secondary);">No ${type.toLowerCase()} data available</div>
+                    </div>
+                `;
+            }
+
+            const mediaItems = items.slice(0, 4).map(item => {
+                // Determine if this is a video and make it playable
+                const isVideo = type === 'Video' && item.video_url;
+                const mediaContent = isVideo ? 
+                    `<div style="position: relative; cursor: pointer;" onclick="this.innerHTML='<video src=\\'${item.video_url}\\' class=\\'media-image\\' controls autoplay style=\\'width: 100%; border-radius: 8px;\\' onerror=\\'this.style.display=\\'none\\'\\'>Your browser does not support the video tag.</video>'">
+                        <img src="${item.photo_url}" alt="Video thumbnail" class="media-image" onerror="this.style.display='none'">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">▶</div>
+                    </div>` :
+                    (item.photo_url ? `<img src="${item.photo_url}" alt="${type}" class="media-image" onerror="this.style.display='none'">` : '');
+                
+                return `
+                <div class="media-item">
+                    <div>
+                        ${mediaContent}
+                    <div class="media-text">${item.text || 'No description available'}</div>
+                    <div class="post-stats">
+                        <span>👁️ ${formatNumber(item.Impressions || 0)}</span>
+                        ${type === 'Video' && item.video_views ? `<span>▶ ${formatNumber(item.video_views)}</span>` : ''}
+                    </div>
+                </div>
+                    <div style="margin-top: 12px;">
+                        <a href="https://x.com/i/status/${item.tweetId || item.tweet_id || item.id || 'unknown'}" target="_blank" rel="noopener noreferrer" 
+                           style="display: inline-block; background: var(--x-blue); color: white; padding: 6px 12px; border-radius: 16px; text-decoration: none; font-size: 12px; font-weight: 600; transition: all 0.2s;"
+                           onmouseover="this.style.backgroundColor='#1a8cd8'"
+                           onmouseout="this.style.backgroundColor='var(--x-blue)'">
+                            View on X ↗
+                        </a>
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            return `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 12px; padding-left: 16px;">${title}</h3>
+                    <div class="media-items-row">
+                        ${mediaItems}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateEngagementCard(type, engagementData) {
+            if (!engagementData || engagementData === '[]') {
+                return `
+                    <div class="engagement-item">
+                        <div class="engagement-header">
+                            <strong>Top ${type}</strong>
+                        </div>
+                        <div style="color: var(--x-text-secondary); margin-top: 20px;">No ${type.toLowerCase()} data available</div>
+                    </div>
+                `;
+            }
+
+            let items = [];
+            try {
+                items = typeof engagementData === 'string' ? JSON.parse(engagementData) : engagementData;
+            } catch(e) {
+                return `
+                    <div class="engagement-item">
+                        <div class="engagement-header">
+                            <strong>Top ${type}</strong>
+                        </div>
+                        <div style="color: var(--x-text-secondary); margin-top: 20px;">Error loading ${type.toLowerCase()} data</div>
+                    </div>
+                `;
+            }
+
+            if (!Array.isArray(items) || items.length === 0) {
+                return `
+                    <div class="engagement-item">
+                        <div class="engagement-header">
+                            <strong>Top ${type}</strong>
+                        </div>
+                        <div style="color: var(--x-text-secondary); margin-top: 20px;">No ${type.toLowerCase()} data available</div>
+                    </div>
+                `;
+            }
+
+            const topItem = items[0];
+            return `
+                <div class="engagement-item">
+                    <div>
+                    <div class="engagement-header">
+                        <strong>Top ${type}</strong>
+                            <span class="tag">${formatNumber(topItem[type] || 0)} ${type.toLowerCase()}s</span>
+                    </div>
+                    ${topItem.photo_url ? `<img src="${topItem.photo_url}" alt="Engagement post" class="engagement-image" onerror="this.style.display='none'">` : ''}
+                    <div class="engagement-text">${topItem.text || 'No description available'}</div>
+                    <div class="post-stats">
+                    </div>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <a href="https://x.com/i/status/${topItem.tweetId || topItem.tweet_id || topItem.id || 'unknown'}" target="_blank" rel="noopener noreferrer" 
+                           style="display: inline-block; background: var(--x-blue); color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: all 0.2s;"
+                           onmouseover="this.style.backgroundColor='#1a8cd8'"
+                           onmouseout="this.style.backgroundColor='var(--x-blue)'">
+                            View on X ↗
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        function createOverviewCharts() {
+            // Impressions Chart
+            const impressionsCtx = document.getElementById('impressionsChart');
+            if (impressionsCtx && !impressionsCtx.chartInstance) {
+                impressionsCtx.chartInstance = new Chart(impressionsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: allData.map(d => d.name),
+                        datasets: [{
+                            label: 'Impressions',
+                            data: allData.map(d => d.impressions),
+                            backgroundColor: function(context) {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) return '#1D9BF0';
+                                
+                                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                gradient.addColorStop(0, 'rgba(29, 155, 240, 0.8)');
+                                gradient.addColorStop(1, 'rgba(59, 130, 246, 1)');
+                                return gradient;
+                            },
+                            borderRadius: 12,
+                            borderSkipped: false,
+                            hoverBackgroundColor: function(context) {
+                                const chart = context.chart;
+                                const {ctx, chartArea} = chart;
+                                if (!chartArea) return '#1a8cd8';
+                                
+                                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                gradient.addColorStop(0, 'rgba(26, 140, 216, 0.9)');
+                                gradient.addColorStop(1, 'rgba(37, 99, 235, 1)');
+                                return gradient;
+                            }
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1200,
+                            easing: 'easeOutQuart'
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
+                                borderWidth: 1,
+                                cornerRadius: 12,
+                                padding: 16,
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 13 },
+                                displayColors: false,
+                                callbacks: {
+                                    title: function(context) {
+                                        return context[0].label;
+                                    },
+                                    label: function(context) {
+                                        return formatNumber(context.parsed.y) + ' impressions';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { 
+                                    color: '#71767B',
+                                    font: { size: 11 },
+                                    padding: 8,
+                                    callback: function(value) {
+                                        return formatNumber(value);
+                                    }
+                                },
+                                grid: { 
+                                    color: 'rgba(47, 51, 54, 0.3)',
+                                    drawBorder: false
+                                },
+                                border: { display: false }
+                            },
+                            x: {
+                                ticks: { 
+                                    color: '#71767B',
+                                    font: { size: 11, weight: '500' },
+                                    padding: 8
+                                },
+                                grid: { display: false },
+                                border: { display: false }
+                            }
+                        },
+                        layout: {
+                            padding: { top: 20, bottom: 10 }
+                        }
+                    }
+                });
+            }
+
+            // Distribution Chart
+            const distributionCtx = document.getElementById('distributionChart');
+            if (distributionCtx && !distributionCtx.chartInstance) {
+                // Calculate percentages and modify labels
+                const chartData = allData.map(d => d.posts);
+                const total = chartData.reduce((a, b) => a + b, 0);
+                const labelsWithPercentages = allData.map((d, index) => {
+                    const percentage = ((d.posts * 100) / total).toFixed(1);
+                    return `${d.name} (${percentage}%)`;
+                });
+
+                distributionCtx.chartInstance = new Chart(distributionCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labelsWithPercentages,
+                        datasets: [{
+                            data: allData.map(d => d.posts),
+                            backgroundColor: [
+                                '#3B82F6', '#EF4444', '#10B981', '#F59E0B',
+                                '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
+                                '#F97316', '#6366F1'
+                            ],
+                            borderWidth: 0,
+                            hoverBorderWidth: 3,
+                            hoverBorderColor: '#ffffff',
+                            hoverBackgroundColor: [
+                                '#2563EB', '#DC2626', '#059669', '#D97706',
+                                '#7C3AED', '#DB2777', '#0891B2', '#65A30D',
+                                '#EA580C', '#4F46E5'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        animation: {
+                            duration: 1500,
+                            easing: 'easeOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                align: 'center',
+                                maxWidth: 250,
+                                labels: { 
+                                    color: '#E7E9EA',
+                                    font: { size: 13, weight: '500' },
+                                    padding: 15,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    boxWidth: 12,
+                                    boxHeight: 12
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                titleColor: '#ffffff',
+                                bodyColor: '#ffffff',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
+                                borderWidth: 1,
+                                cornerRadius: 12,
+                                padding: 16,
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 13 },
+                                displayColors: true,
+                                callbacks: {
+                                    title: function(context) {
+                                        return context[0].label;
+                                    },
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.parsed * 100) / total).toFixed(1);
+                                        return formatNumber(context.parsed) + ' posts (' + percentage + '%)';
+                                    }
+                                }
+                            }
+                        },
+                        layout: {
+                            padding: { top: 10, bottom: 20 }
+                        }
+                    }
+                });
+            }
+        }
+
+        function createDemographicCharts(category) {
+            const ageChartId = `ageChart_${category.name.replace(/\s+/g, '_')}`;
+            const genderChartId = `genderChart_${category.name.replace(/\s+/g, '_')}`;
+            
+            // Age Chart
+            setTimeout(() => {
+                const ageCtx = document.getElementById(ageChartId);
+                if (ageCtx && category.age_data && category.age_data.length > 0) {
+                    if (ageCtx.chartInstance) {
+                        ageCtx.chartInstance.destroy();
+                    }
+                    ageCtx.chartInstance = new Chart(ageCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: category.age_data.map(d => d.label),
+                            datasets: [{
+                                label: 'Percentage',
+                                data: category.age_data.map(d => d.value),
+                                backgroundColor: function(context) {
+                                    const chart = context.chart;
+                                    const {ctx, chartArea} = chart;
+                                    if (!chartArea) return '#10B981';
+                                    
+                                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                    gradient.addColorStop(0, 'rgba(16, 185, 129, 0.8)');
+                                    gradient.addColorStop(1, 'rgba(34, 197, 94, 1)');
+                                    return gradient;
+                                },
+                                borderRadius: 8,
+                                borderSkipped: false,
+                                hoverBackgroundColor: function(context) {
+                                    const chart = context.chart;
+                                    const {ctx, chartArea} = chart;
+                                    if (!chartArea) return '#059669';
+                                    
+                                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                    gradient.addColorStop(0, 'rgba(5, 150, 105, 0.9)');
+                                    gradient.addColorStop(1, 'rgba(21, 128, 61, 1)');
+                                    return gradient;
+                                }
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 1000,
+                                easing: 'easeOutQuart'
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                    borderWidth: 1,
+                                    cornerRadius: 12,
+                                    padding: 16,
+                                    titleFont: { size: 14, weight: 'bold' },
+                                    bodyFont: { size: 13 },
+                                    displayColors: false,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.parsed.y + '%';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { 
+                                        color: '#71767B',
+                                        font: { size: 11 },
+                                        callback: function(value) {
+                                            return value + '%';
+                                        }
+                                    },
+                                    grid: { 
+                                        color: 'rgba(47, 51, 54, 0.3)',
+                                        drawBorder: false
+                                    },
+                                    border: { display: false }
+                                },
+                                x: {
+                                    ticks: { 
+                                        color: '#71767B',
+                                        font: { size: 11, weight: '500' }
+                                    },
+                                    grid: { display: false },
+                                    border: { display: false }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 100);
+
+            // Gender Chart
+            setTimeout(() => {
+                const genderCtx = document.getElementById(genderChartId);
+                if (genderCtx && category.gender_data && category.gender_data.length > 0) {
+                    if (genderCtx.chartInstance) {
+                        genderCtx.chartInstance.destroy();
+                    }
+                    genderCtx.chartInstance = new Chart(genderCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: category.gender_data.map(d => d.label),
+                            datasets: [{
+                                data: category.gender_data.map(d => d.value),
+                                 backgroundColor: ['#00FFFF', '#FF00FF'],
+                                 borderWidth: 0,
+                                 hoverBorderWidth: 3,
+                                 hoverBorderColor: '#ffffff',
+                                 hoverBackgroundColor: ['#00E6E6', '#E600E6']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '60%',
+                            animation: {
+                                duration: 1200,
+                                easing: 'easeOutQuart'
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { 
+                                        color: '#71767B',
+                                        font: { size: 12, weight: '500' },
+                                        padding: 15,
+                                        usePointStyle: true,
+                                        pointStyle: 'circle'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                    borderWidth: 1,
+                                    cornerRadius: 12,
+                                    padding: 16,
+                                    titleFont: { size: 14, weight: 'bold' },
+                                    bodyFont: { size: 13 },
+                                    displayColors: true,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.parsed + '%';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        function createDailyChart(category) {
+            const dailyChartId = `dailyChart_${category.name.replace(/\s+/g, '_')}`;
+            
+            setTimeout(() => {
+                const dailyCtx = document.getElementById(dailyChartId);
+                if (dailyCtx && category.daily_data_json) {
+                    if (dailyCtx.chartInstance) {
+                        dailyCtx.chartInstance.destroy();
+                    }
+                    
+                    let dailyData = [];
+                    try {
+                        if (typeof category.daily_data_json === 'string') {
+                            dailyData = JSON.parse(category.daily_data_json);
+                        } else if (Array.isArray(category.daily_data_json)) {
+                            dailyData = category.daily_data_json;
+                        } else {
+                            return;
+                        }
+                    } catch(e) {
+                        console.error('Error parsing daily data:', e);
+                        return;
+                    }
+                    
+                    if (!Array.isArray(dailyData) || dailyData.length === 0) {
+                        return;
+                    }
+                    
+                    dailyCtx.chartInstance = new Chart(dailyCtx, {
+                        type: 'line',
+                        data: {
+                            labels: dailyData.map(d => d.post_date || d.date),
+                            datasets: [{
+                                label: 'Posts per Day',
+                                data: dailyData.map(d => d.no_of_posts || d.post_count),
+                                borderColor: '#1D9BF0',
+                                backgroundColor: function(context) {
+                                    const chart = context.chart;
+                                    const {ctx, chartArea} = chart;
+                                    if (!chartArea) return 'rgba(29, 155, 240, 0.1)';
+                                    
+                                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                    gradient.addColorStop(0, 'rgba(29, 155, 240, 0.05)');
+                                    gradient.addColorStop(1, 'rgba(29, 155, 240, 0.3)');
+                                    return gradient;
+                                },
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#1D9BF0',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 1,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                pointHoverBackgroundColor: '#1a8cd8',
+                                pointHoverBorderColor: '#ffffff',
+                                pointHoverBorderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 1500,
+                                easing: 'easeOutQuart'
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                                    borderWidth: 1,
+                                    cornerRadius: 12,
+                                    padding: 16,
+                                    titleFont: { size: 14, weight: 'bold' },
+                                    bodyFont: { size: 13 },
+                                    displayColors: false,
+                                    callbacks: {
+                                        title: function(context) {
+                                            const dataIndex = context[0].dataIndex;
+                                            return dailyData[dataIndex].post_date || dailyData[dataIndex].date;
+                                        },
+                                        label: function(context) {
+                                            return formatNumber(context.parsed.y) + ' posts';
+                                        },
+                                        afterLabel: function(context) {
+                                            const dataIndex = context.dataIndex;
+                                            const topPost = dailyData[dataIndex].top_post_day;
+                                            if (topPost) {
+                                                return [
+                                                    '',
+                                                    '🔥 Top Post:',
+                                                    topPost.text.substring(0, 80) + (topPost.text.length > 80 ? '...' : ''),
+                                                    '👁️ ' + formatNumber(topPost.Impressions) + ' impressions',
+                                                    '',
+                                                    '🔗 Click to view on X →'
+                                                ];
+                                            }
+                                            return '';
+                                        }
+                                    }
+                                }
+                            },
+                            onClick: (event, elements) => {
+                                if (elements.length > 0) {
+                                    const dataIndex = elements[0].index;
+                                    const dayData = dailyData[dataIndex];
+                                    if (dayData.top_post_day && dayData.top_post_day.tweetId) {
+                                        window.open(`https://x.com/i/status/${dayData.top_post_day.tweetId}`, '_blank');
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { 
+                                        color: '#71767B',
+                                        font: { size: 11 },
+                                        callback: function(value) {
+                                            return formatNumber(value);
+                                        }
+                                    },
+                                    grid: { 
+                                        color: 'rgba(47, 51, 54, 0.3)',
+                                        drawBorder: false
+                                    },
+                                    border: { display: false }
+                                },
+                                x: {
+                                    ticks: { 
+                                        color: '#71767B',
+                                        font: { size: 11, weight: '500' },
+                                        callback: function(value, index) {
+                                            const dateStr = this.getLabelForValue(value);
+                                            const date = new Date(dateStr + 'T00:00:00');
+                                            if (isNaN(date.getTime())) {
+                                                return dateStr; // fallback to original string
+                                            }
+                                            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                        }
+                                    },
+                                    grid: { display: false },
+                                    border: { display: false }
+                                }
+                            },
+                            layout: {
+                                padding: { top: 20, bottom: 10 }
+                            }
+                        }
+                    });
+                }
+            }, 200);
+        }
+
+        // Add real-time counter animation
+        function animateCounter(element, target, duration = 2000) {
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                element.textContent = formatNumber(Math.floor(current));
+            }, 16);
+        }
+        
+        // Add data insights tooltips
+        function addInsightTooltips() {
+            const insightCards = document.querySelectorAll('.insight-card');
+            insightCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'insight-tooltip';
+                    tooltip.innerHTML = `
+                        <div style="font-weight: 600; margin-bottom: 4px;">💡 Quick Insight</div>
+                        <div style="font-size: 12px;">Click to explore on X/Twitter</div>
+                    `;
+                    document.body.appendChild(tooltip);
+                    
+                    const rect = this.getBoundingClientRect();
+                    tooltip.style.left = rect.left + 'px';
+                    tooltip.style.top = (rect.top - 60) + 'px';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    const tooltip = document.querySelector('.insight-tooltip');
+                    if (tooltip) tooltip.remove();
+                });
+            });
+        }
+        
+        // Add pulse animation for high-performing metrics
+        function highlightTopMetrics() {
+            const metricCards = document.querySelectorAll('.metric-card');
+            metricCards.forEach((card, index) => {
+                const valueElement = card.querySelector('.metric-value');
+                if (!valueElement) return;
+                
+                const value = parseInt(valueElement.textContent.replace(/[^\d]/g, ''));
+                
+                // Highlight metrics above certain thresholds
+                if (value > 1000000) { // 1M+
+                    card.classList.add('metric-highlight-gold');
+                } else if (value > 100000) { // 100K+
+                    card.classList.add('metric-highlight-silver');
+                }
+            });
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎮 PLAYGROUND: DOM loaded, initializing...');
+            console.log('📊 Data length:', allData.length);
+            
+            // Wait a bit for Chart.js to load
+            setTimeout(() => {
+                try {
+                    initializeDashboard();
+                    addInsightTooltips();
+                    highlightTopMetrics();
+                    
+                    // Update dynamic header with real data
+                    const subtitle = document.getElementById('dynamic-subtitle');
+                    if (subtitle && typeof countryDisplay !== 'undefined' && typeof dateRange !== 'undefined') {
+                        subtitle.textContent = `X Insights Lab | ${countryDisplay} | ${dateRange}`;
+                    }
+                    
+                    console.log('✅ PLAYGROUND: Dashboard initialized successfully with cool features!');
+                } catch (error) {
+                    console.error('❌ PLAYGROUND: Error initializing dashboard:', error);
+                    // Show error on page
+                    document.body.innerHTML = `
+                        <div style="color: #ff6b6b; padding: 20px; text-align: center;">
+                            <h2>🚨 Playground Error</h2>
+                            <p>Error initializing dashboard: ${error.message}</p>
+                            <p>Check browser console for details</p>
+                            <p><a href="debug_playground.html" style="color: #1D9BF0;">Try Debug Version</a></p>
+                        </div>
+                    `;
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
+    
